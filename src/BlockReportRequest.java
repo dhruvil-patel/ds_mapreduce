@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class BlockReportRequest {
 	DataNodeLocation location;
 	int blockNumbers[];
@@ -200,6 +202,7 @@ class OpenFileRequest {
 	String fileName;
 	boolean forRead;
 
+	
 	OpenFileRequest(byte[] input) {
 
 	}
@@ -212,8 +215,15 @@ class OpenFileRequest {
 class OpenFileResponse {
 	int status;
 	int handle;
-	int blockNums[];
+	ArrayList<Integer> blockNums;
 
+	OpenFileResponse(){
+		status = -1;
+		handle = -1;
+		blockNums = new ArrayList<Integer>();
+		blockNums.add(-1);
+	}
+	
 	OpenFileResponse(byte[] input) {
 
 	}
