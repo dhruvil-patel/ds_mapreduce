@@ -113,6 +113,10 @@ class CloseFileRequest {
 
 class CloseFileResponse {
 	int status;
+	
+	CloseFileResponse(){
+		
+	}
 
 	CloseFileResponse(byte[] input) {
 
@@ -218,10 +222,9 @@ class OpenFileResponse {
 	ArrayList<Integer> blockNums;
 
 	OpenFileResponse(){
-		status = -1;
-		handle = -1;
+		
 		blockNums = new ArrayList<Integer>();
-		blockNums.add(-1);
+		
 	}
 	
 	OpenFileResponse(byte[] input) {
