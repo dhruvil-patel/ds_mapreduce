@@ -151,6 +151,9 @@ public class HeartBeatResponse {
 		status =  builder.getStatus();
 	}
 
+	public HeartBeatResponse() {
+		// TODO Auto-generated constructor stub
+	}
 	public byte[] toProto() {
 		HDFS.HeartBeatResponse.Builder builder = HDFS.HeartBeatResponse.newBuilder();
 		builder.setStatus(status);	

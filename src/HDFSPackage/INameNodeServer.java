@@ -13,6 +13,7 @@ public class INameNodeServer implements INameNode {
 	 HashMap<String, ArrayList<Integer>> nameToBlocks = new HashMap <String,ArrayList<Integer>> ();
 	 HashMap<Integer, String> handleToname = new HashMap <Integer,String> ();
 	 HashMap<Integer, ArrayList<DataNodeLocation>> blockToNodes = new HashMap <Integer,ArrayList<DataNodeLocation>>();
+	 HashMap<Integer,Boolean> heartBeats = new HashMap<Integer,Boolean>();
 	 
 	 static int fileHandle = 0;
 	
@@ -115,7 +116,7 @@ public class INameNodeServer implements INameNode {
 		BlockReportResponse blockReportResponse = new BlockReportResponse();
 	
 		ArrayList <DataNodeLocation> dataNode;
-		for(Integer b : blockReportRequest.blockNumbers){
+		for(int b : blockReportRequest.blockNumbers){
 			if(blockToNodes.containsKey(b)){
 				dataNode = blockToNodes.get(b); 
 				if(!(dataNode.contains(blockReportRequest.location))) {
@@ -124,18 +125,24 @@ public class INameNodeServer implements INameNode {
 					blockToNodes.put(b,dataNode);
 				}
 			}else{
-				dataNode = ArrayList<DataNodeLocation> ();
+				dataNode = new ArrayList<DataNodeLocation>(); 
 				dataNode.add(blockReportRequest.location);
-				blockToNodes.add(b,dataNode);
+				blockToNodes.put(b, dataNode);
 			}
+			blockReportResponse.status.add(1);
 		}
-		return null;
+		return blockReportResponse.toProto();
 	}
 
 	@Override
-	public byte[] heartBeat(byte[] HeartBeatRequest) {
-		// TODO Auto-generated method stub
-		return null;
+	public byte[] heartBeat(byte[] input) {		//HeartBeatRequest
+ 		// TODO Auto-generated method stub
+		
+		HeartBeatRequest heartBeatRequest = new HeartBeatRequest(input);
+		HeartBeatResponse heartBeatResponse = new HeartBeatResponse();
+		heartBeats.put(heartBeatRequest.id, true);
+		heartBeatResponse.status = 1;
+		return heartBeatResponse.toProto();
 	}
 
 }
