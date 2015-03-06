@@ -479,6 +479,10 @@ public class ListFilesResponse {
 			fileNames.add(s);
 	}
 
+	public ListFilesResponse() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public byte[] toProto() {
 		HDFS.ListFilesResponse.Builder builder = HDFS.ListFilesResponse.newBuilder();
 		builder.setStatus(status);	

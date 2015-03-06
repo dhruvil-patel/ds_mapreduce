@@ -1,8 +1,14 @@
 package HDFSPackage;
 import HDFSPackage.RequestResponse.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
+import java.util.Set;
 
 import javax.sound.sampled.DataLine;
 
@@ -13,9 +19,11 @@ public class INameNodeServer implements INameNode {
 	 HashMap<String, ArrayList<Integer>> nameToBlocks = new HashMap <String,ArrayList<Integer>> ();
 	 HashMap<Integer, String> handleToname = new HashMap <Integer,String> ();
 	 HashMap<Integer, ArrayList<DataNodeLocation>> blockToNodes = new HashMap <Integer,ArrayList<DataNodeLocation>>();
-	 HashMap<Integer,Boolean> heartBeats = new HashMap<Integer,Boolean>();
-	 
+	 HashMap<Integer,Boolean> heartBeats = new HashMap<Integer, Boolean>();
+	 HashMap<DataNodeLocation, Boolean> aliveDataNodes = new HashMap<DataNodeLocation,Boolean>();
 	 static int fileHandle = 0;
+	 static int blockNumber = 25;   // Initialise from config
+	 int replicatioFactor = 3;		// Initialise from config
 	
 	@Override
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
@@ -99,14 +107,47 @@ public class INameNodeServer implements INameNode {
 		AssignBlockRequest assignBlockRequest = new AssignBlockRequest(input);
 		AssignBlockResponse assignBlockResponse = new AssignBlockResponse();
 		
+		ArrayList<DataNodeLocation> allNodes = null;
+		allNodes.addAll(aliveDataNodes.keySet());
+		Set<DataNodeLocation> node = null;
 		
-		return null;
+		int size = aliveDataNodes.size();
+		Random randomGen = new Random();
+		while(node.size() < replicatioFactor){
+			int random = randomGen.nextInt(size);
+			if(!node.contains(allNodes.get(random))){
+				node.add(allNodes.get(random));
+			}
+		}
+		/**
+		 * Code to update nameToBlock mapping
+		 */
+		blockNumber++;
+		ArrayList <Integer> blockList = new ArrayList<Integer>();
+		String file = handleToname.get(assignBlockRequest.handle);
+		if(nameToBlocks.containsKey(file)){
+			blockList = nameToBlocks.get(file);
+		}
+		blockList.add(blockNumber);	
+		nameToBlocks.put(file,blockList);	
+		
+		assignBlockResponse.newBlock.blockNumber = blockNumber;
+		assignBlockResponse.newBlock.locations = allNodes;
+		assignBlockResponse.status = 1 ;  
+		
+		return assignBlockResponse.toProto();
 	}
 
 	@Override
-	public byte[] list(byte[] ListFilesRequest) {
+	public byte[] list(byte[] input) {  //ListFilesRequest
 		// TODO Auto-generated method stub
-		return null;
+		ListFilesRequest listFileRequest = new ListFilesRequest(input);
+		ListFilesResponse listFilesResponse = new ListFilesResponse();
+		
+		listFilesResponse.status = 1;
+		Set<String> list = nameToBlocks.keySet();
+		listFilesResponse.fileNames = new ArrayList<String>(list); 
+		return listFilesResponse.toProto();
 	}
 
 	@Override
