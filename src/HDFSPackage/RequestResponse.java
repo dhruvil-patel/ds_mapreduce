@@ -58,6 +58,10 @@ public class BlockReportResponse {
 		status = a;
 	}
 
+	public BlockReportResponse() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public byte[] toProto() {
 		HDFS.BlockReportResponse.Builder builder = HDFS.BlockReportResponse.newBuilder();
 		for(int i : status)
@@ -219,6 +223,9 @@ public class BlockLocations {
 		}
 	}
 	
+	public BlockLocations() {
+		// TODO Auto-generated constructor stub
+	}
 	public HDFS.BlockLocations.Builder toProtoObject() {
 		HDFS.BlockLocations.Builder builder = HDFS.BlockLocations.newBuilder();
 		builder.setBlockNumber(blockNumber);
@@ -301,6 +308,9 @@ public class CloseFileResponse {
 		status = builder.getStatus();
 	}
 
+	public CloseFileResponse() {
+		// TODO Auto-generated constructor stub
+	}
 	public byte[] toProto() {
 		HDFS.CloseFileResponse.Builder builder = HDFS.CloseFileResponse.newBuilder();
 		builder.setStatus(status);	
@@ -351,6 +361,9 @@ public class BlockLocationResponse {
 		}
 	}
 
+	public BlockLocationResponse() {
+		// TODO Auto-generated constructor stub
+	}
 	public byte[] toProto() {
 		HDFS.BlockLocationResponse.Builder builder = HDFS.BlockLocationResponse.newBuilder();
 		builder.setStatus(status);
@@ -403,6 +416,10 @@ public class AssignBlockResponse {
 	public AssignBlockResponse(int _s, BlockLocations _n) {
 		newBlock = _n;
 		status = _s;
+	}
+
+	public AssignBlockResponse() {
+		// TODO Auto-generated constructor stub
 	}
 
 	public byte[] toProto() {
@@ -520,6 +537,9 @@ public class OpenFileResponse {
 			blockNums.add(i);
 	}
 
+	public OpenFileResponse() {
+		// TODO Auto-generated constructor stub
+	}
 	public byte[] toProto() {
 		HDFS.OpenFileResponse.Builder builder = HDFS.OpenFileResponse.newBuilder();
 		builder.setStatus(status);	

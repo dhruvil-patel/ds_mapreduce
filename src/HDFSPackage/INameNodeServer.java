@@ -1,3 +1,6 @@
+package HDFSPackage;
+import HDFSPackage.RequestResponse.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 

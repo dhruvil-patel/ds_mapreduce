@@ -1,3 +1,5 @@
+package HDFSPackage;
+import HDFSPackage.RequestResponse.*;
 
 public class IDataNodeServer implements IDataNode {
 
