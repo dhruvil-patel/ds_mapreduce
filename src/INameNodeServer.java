@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.sound.sampled.DataLine;
+
 
 public class INameNodeServer implements INameNode {
 
@@ -33,6 +35,10 @@ public class INameNodeServer implements INameNode {
 			fileHandle++;
 			handleToname.put(fileHandle,openFileRequest.fileName);
 			openFileResponse.handle = fileHandle;
+			
+			/**
+			 * if we have to create new file every time then we remove
+			 */
 			if(nameToBlocks.containsKey(openFileRequest.fileName)){   //file exists     
 				openFileResponse.status = 1;
 				openFileResponse.blockNums = (ArrayList<Integer>) nameToBlocks.get(openFileRequest.fileName);
@@ -52,24 +58,44 @@ public class INameNodeServer implements INameNode {
 		
 		CloseFileRequest closeFileRequest = new CloseFileRequest(input);
 		CloseFileResponse closeFileResponse = new CloseFileResponse();
-		if(handleToname.containsKey(closeFileRequest.handle)){
+		if(handleToname.containsKey(closeFileRequest.handle)){			
 			closeFileResponse.status = 1;
-			handleToname.remove(closeFileRequest.handle);
-		}else{
+			handleToname.remove(closeFileRequest.handle);     
+		}else{					
 			closeFileResponse.status = -1;
 		}
 		return closeFileResponse.toProto();
 	}
 
 	@Override
-	public byte[] getBlockLocations(byte[] BlockLocationRequest) {
+	public byte[] getBlockLocations(byte[] input) { //BlockLocationRequest
 		// TODO Auto-generated method stub
-		return null;
+		BlockLocationRequest blockLocationRequest = new BlockLocationRequest(input);
+		BlockLocationResponse blockReLocationResponse = new BlockLocationResponse();
+		blockReLocationResponse.status = 1; 
+		
+		for( int b : blockLocationRequest.blockNums){
+			BlockLocations block = new BlockLocations();
+			block.blockNumber = b;
+			if(blockToNodes.containsKey(b)){
+				block.locations = blockToNodes.get(b);
+				blockReLocationResponse.blockLocations.add(block);
+			}else
+				blockReLocationResponse.status = 0;
+		}
+		//set status;
+		
+		return blockReLocationResponse.toProto();
 	}
 
 	@Override
-	public byte[] assignBlock(byte[] AssignBlockRequest) {
+	public byte[] assignBlock(byte[] input) {   //AssignBlockRequest 
 		// TODO Auto-generated method stub
+		
+		AssignBlockRequest assignBlockRequest = new AssignBlockRequest(input);
+		AssignBlockResponse assignBlockResponse = new AssignBlockResponse();
+		
+		
 		return null;
 	}
 
@@ -80,8 +106,26 @@ public class INameNodeServer implements INameNode {
 	}
 
 	@Override
-	public byte[] blockReport(byte[] BlockReportRequest) {
+	public byte[] blockReport(byte[] input) {	//BlockLocationRequest 
 		// TODO Auto-generated method stub
+		BlockReportRequest blockReportRequest = new BlockReportRequest(input);
+		BlockReportResponse blockReportResponse = new BlockReportResponse();
+	
+		ArrayList <DataNodeLocation> dataNode;
+		for(Integer b : blockReportRequest.blockNumbers){
+			if(blockToNodes.containsKey(b)){
+				dataNode = blockToNodes.get(b); 
+				if(!(dataNode.contains(blockReportRequest.location))) {
+					System.out.println(b);
+					dataNode.add(blockReportRequest.location);
+					blockToNodes.put(b,dataNode);
+				}
+			}else{
+				dataNode = ArrayList<DataNodeLocation> ();
+				dataNode.add(blockReportRequest.location);
+				blockToNodes.add(b,dataNode);
+			}
+		}
 		return null;
 	}
 

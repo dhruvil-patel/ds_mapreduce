@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 
 public class BlockReportRequest {
-	DataNodeLocation location;
-	int blockNumbers[];
+	public DataNodeLocation location;
+	ArrayList<Integer> blockNumbers;
 
 	BlockReportRequest(byte[] input) {
 		
@@ -14,8 +14,12 @@ public class BlockReportRequest {
 }
 
 class BlockReportResponse {
-	int status[];
+	ArrayList<Integer> status;
 
+	BlockReportResponse(){
+		status = new ArrayList<Integer> ();
+	}
+	
 	BlockReportResponse(byte[] input) {
 
 	}
@@ -76,8 +80,12 @@ class WriteBlockRequest {
 
 class BlockLocations {
 	int blockNumber;
-	DataNodeLocation locations[];
+	ArrayList<DataNodeLocation> locations;
 
+	BlockLocations(){
+		
+	}
+	
 	BlockLocations(byte[] input) {
 
 	}
@@ -128,7 +136,7 @@ class CloseFileResponse {
 }
 
 class BlockLocationRequest {
-	int blockNums[];
+	ArrayList<Integer> blockNums;
 
 	BlockLocationRequest(byte[] input) {
 
@@ -141,8 +149,12 @@ class BlockLocationRequest {
 
 class BlockLocationResponse {
 	int status;
-	BlockLocations blockLocations[];
+	ArrayList<BlockLocations> blockLocations;
 
+	BlockLocationResponse(){
+		blockLocations = new ArrayList<BlockLocations>();
+	}
+	
 	BlockLocationResponse(byte[] input) {
 
 	}
@@ -168,6 +180,10 @@ class AssignBlockResponse {
 	int status;
 	BlockLocations newBlock;
 
+	AssignBlockResponse(){
+		
+	}
+	
 	AssignBlockResponse(byte[] input) {
 
 	}
@@ -250,7 +266,7 @@ class ReadBlockRequest {
 
 class ReadBlockResponse {
 	int status;
-	byte data[];
+	ArrayList<Byte> data;
 
 	ReadBlockResponse(byte[] input) {
 
