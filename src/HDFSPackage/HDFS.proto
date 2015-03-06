@@ -18,6 +18,7 @@ message HeartBeatResponse {
 
 message WriteBlockRequest {
   optional BlockLocations blockInfo = 1;
+  repeated bytes data = 2;
 }
 
 message WriteBlockResponse {

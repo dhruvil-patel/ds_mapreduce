@@ -1,3 +1,4 @@
+package HDFSPackage;
 public interface INameNode {
 
 	/* OpenFileResponse openFile(OpenFileRequest) */
