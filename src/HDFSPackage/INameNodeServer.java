@@ -1,9 +1,24 @@
 package HDFSPackage;
 import HDFSPackage.RequestResponse.*;
 
-import java.io.*;
-import java.rmi.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.rmi.Remote;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.security.AllPermission;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Scanner;
+import java.util.Set;
 
 import javax.sound.sampled.DataLine;
 
@@ -204,6 +219,7 @@ public class INameNodeServer implements INameNode {
 			replicatioFactor = sc.nextInt();
 			thresholdTime = sc.nextLong();
 			blockNumber = sc.nextInt();
+			// TODO load nameToBlock
 			sc.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -217,7 +233,10 @@ public class INameNodeServer implements INameNode {
 		try {
             String name = "NameNode";
             INameNode nameNode = new INameNodeServer(args[0]);
-            Naming.rebind(name, (Remote) nameNode);
+            INameNode stub =
+            		(INameNode) UnicastRemoteObject.exportObject((Remote) nameNode, 0);
+            Registry registry = LocateRegistry.getRegistry();
+            registry.rebind(name, (Remote) stub);
             System.out.println("NameNode bound");
         } catch (Exception e) {
            
