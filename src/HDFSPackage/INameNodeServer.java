@@ -124,11 +124,13 @@ public class INameNodeServer implements INameNode {
 		
 		int size = aliveDataNodes.size();
 		Random randomGen = new Random();
-		while(node.size() < replicatioFactor){
+		int i = 0;
+		while(node.size() < replicatioFactor && i < allNodes.size()){
 			int random = randomGen.nextInt(size);
 			if(allNodes.get(random).time >= System.currentTimeMillis() - thresholdTime){
 				node.add(allNodes.get(random));
 			}
+			i++;
 		}
 		/**
 		 * Code to update nameToBlock mapping
@@ -155,6 +157,8 @@ public class INameNodeServer implements INameNode {
 			e.printStackTrace();
 		}
 		
+		allNodes.clear();
+		allNodes.addAll(node);
 		assignBlockResponse.newBlock.blockNumber = blockNumber;
 		assignBlockResponse.newBlock.locations = allNodes;
 		assignBlockResponse.status = 1 ;  
