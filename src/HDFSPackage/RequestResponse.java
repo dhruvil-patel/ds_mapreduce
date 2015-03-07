@@ -74,6 +74,7 @@ public class BlockReportResponse {
 public class DataNodeLocation {
 	public int ip;
 	public int port;
+	public long time;
 
 	public DataNodeLocation(byte[] input) {
 		try {

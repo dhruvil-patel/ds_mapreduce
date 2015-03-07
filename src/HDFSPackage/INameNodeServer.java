@@ -1,14 +1,9 @@
 package HDFSPackage;
 import HDFSPackage.RequestResponse.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Set;
+import java.io.*;
+import java.rmi.*;
+import java.util.*;
 
 import javax.sound.sampled.DataLine;
 
@@ -19,11 +14,12 @@ public class INameNodeServer implements INameNode {
 	 HashMap<String, ArrayList<Integer>> nameToBlocks = new HashMap <String,ArrayList<Integer>> ();
 	 HashMap<Integer, String> handleToname = new HashMap <Integer,String> ();
 	 HashMap<Integer, ArrayList<DataNodeLocation>> blockToNodes = new HashMap <Integer,ArrayList<DataNodeLocation>>();
-	 HashMap<Integer,Boolean> heartBeats = new HashMap<Integer, Boolean>();
-	 HashMap<DataNodeLocation, Boolean> aliveDataNodes = new HashMap<DataNodeLocation,Boolean>();
+	 HashMap<Integer,DataNodeLocation> aliveDataNodes = new HashMap<Integer,DataNodeLocation>();
+	  
 	 static int fileHandle = 0;
 	 static int blockNumber = 25;   // Initialise from config
 	 int replicatioFactor = 3;		// Initialise from config
+	 long thresholdTime = 200;
 	
 	@Override
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
@@ -41,7 +37,7 @@ public class INameNodeServer implements INameNode {
 			}else{			// file not exists		
 				openFileResponse.status = -1;
 				openFileResponse.handle = -1;
-				openFileResponse.blockNums.add(-1);
+				
 			}
 		}else{				//write request
 			fileHandle++;
@@ -58,7 +54,7 @@ public class INameNodeServer implements INameNode {
 				ArrayList<Integer> block = new ArrayList<Integer>();
 				nameToBlocks.put(openFileRequest.fileName, block);
 				openFileResponse.status = 2;
-				openFileResponse.blockNums.add(-1);			
+							
 			}
 		}
 		return openFileResponse.toProto();
@@ -107,15 +103,15 @@ public class INameNodeServer implements INameNode {
 		AssignBlockRequest assignBlockRequest = new AssignBlockRequest(input);
 		AssignBlockResponse assignBlockResponse = new AssignBlockResponse();
 		
-		ArrayList<DataNodeLocation> allNodes = null;
-		allNodes.addAll(aliveDataNodes.keySet());
-		Set<DataNodeLocation> node = null;
+		ArrayList<DataNodeLocation> allNodes = new ArrayList<DataNodeLocation>();
+		allNodes.addAll(aliveDataNodes.values());
+		Set<DataNodeLocation> node = new HashSet<>();
 		
 		int size = aliveDataNodes.size();
 		Random randomGen = new Random();
 		while(node.size() < replicatioFactor){
 			int random = randomGen.nextInt(size);
-			if(!node.contains(allNodes.get(random))){
+			if(allNodes.get(random).time >= System.currentTimeMillis() - thresholdTime){
 				node.add(allNodes.get(random));
 			}
 		}
@@ -130,6 +126,19 @@ public class INameNodeServer implements INameNode {
 		}
 		blockList.add(blockNumber);	
 		nameToBlocks.put(file,blockList);	
+		
+		try {
+			FileWriter fw = new FileWriter(file,true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			String data = Integer.toString(blockNumber) + ",";
+			bw.append(data);
+			bw.flush();
+			bw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			
+			e.printStackTrace();
+		}
 		
 		assignBlockResponse.newBlock.blockNumber = blockNumber;
 		assignBlockResponse.newBlock.locations = allNodes;
@@ -181,9 +190,38 @@ public class INameNodeServer implements INameNode {
 		
 		HeartBeatRequest heartBeatRequest = new HeartBeatRequest(input);
 		HeartBeatResponse heartBeatResponse = new HeartBeatResponse();
-		heartBeats.put(heartBeatRequest.id, true);
+		DataNodeLocation dataNodeLocation = aliveDataNodes.get(heartBeatRequest.id);
+		dataNodeLocation.time = System.currentTimeMillis();
+		aliveDataNodes.put(heartBeatRequest.id, dataNodeLocation);
 		heartBeatResponse.status = 1;
 		return heartBeatResponse.toProto();
 	}
 
+	public INameNodeServer(String file){
+		try {
+			FileInputStream  fi = new FileInputStream(file);
+			Scanner sc = new Scanner(fi);
+			replicatioFactor = sc.nextInt();
+			thresholdTime = sc.nextLong();
+			blockNumber = sc.nextInt();
+			sc.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	public static void main(String args[]){
+		try {
+            String name = "NameNode";
+            INameNode nameNode = new INameNodeServer(args[0]);
+            Naming.rebind(name, (Remote) nameNode);
+            System.out.println("NameNode bound");
+        } catch (Exception e) {
+           
+            e.printStackTrace();
+        }
+	}
 }
