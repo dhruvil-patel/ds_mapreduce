@@ -1,18 +1,12 @@
 package HDFSPackage;
-import HDFSPackage.RequestResponse.*;
-
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.AllPermission;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +14,21 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 
-import javax.sound.sampled.DataLine;
+import HDFSPackage.RequestResponse.AssignBlockRequest;
+import HDFSPackage.RequestResponse.AssignBlockResponse;
+import HDFSPackage.RequestResponse.BlockLocationRequest;
+import HDFSPackage.RequestResponse.BlockLocationResponse;
+import HDFSPackage.RequestResponse.BlockLocations;
+import HDFSPackage.RequestResponse.BlockReportRequest;
+import HDFSPackage.RequestResponse.BlockReportResponse;
+import HDFSPackage.RequestResponse.CloseFileRequest;
+import HDFSPackage.RequestResponse.CloseFileResponse;
+import HDFSPackage.RequestResponse.DataNodeLocation;
+import HDFSPackage.RequestResponse.HeartBeatRequest;
+import HDFSPackage.RequestResponse.HeartBeatResponse;
+import HDFSPackage.RequestResponse.ListFilesResponse;
+import HDFSPackage.RequestResponse.OpenFileRequest;
+import HDFSPackage.RequestResponse.OpenFileResponse;
 
 
 public class INameNodeServer implements INameNode {
@@ -35,10 +43,10 @@ public class INameNodeServer implements INameNode {
 	 static int blockNumber = 25;   // Initialise from config
 	 int replicatioFactor = 3;		// Initialise from config
 	 long thresholdTime = 200;
+	private String configFile = "namenode.config";
 	
 	@Override
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
-		// TODO Auto-generated method stub
 		OpenFileRequest openFileRequest = new OpenFileRequest(input);
 		OpenFileResponse  openFileResponse = new OpenFileResponse();
 				
@@ -77,8 +85,6 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] closeFile(byte[] input) { //CloseFileRequest
-		// TODO Auto-generated method stub
-		
 		CloseFileRequest closeFileRequest = new CloseFileRequest(input);
 		CloseFileResponse closeFileResponse = new CloseFileResponse();
 		if(handleToname.containsKey(closeFileRequest.handle)){			
@@ -92,7 +98,6 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] getBlockLocations(byte[] input) { //BlockLocationRequest
-		// TODO Auto-generated method stub
 		BlockLocationRequest blockLocationRequest = new BlockLocationRequest(input);
 		BlockLocationResponse blockReLocationResponse = new BlockLocationResponse();
 		blockReLocationResponse.status = 1; 
@@ -113,7 +118,6 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] assignBlock(byte[] input) {   //AssignBlockRequest 
-		// TODO Auto-generated method stub
 		
 		AssignBlockRequest assignBlockRequest = new AssignBlockRequest(input);
 		AssignBlockResponse assignBlockResponse = new AssignBlockResponse();
@@ -152,8 +156,6 @@ public class INameNodeServer implements INameNode {
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			
 			e.printStackTrace();
 		}
 		
@@ -168,8 +170,7 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] list(byte[] input) {  //ListFilesRequest
-		// TODO Auto-generated method stub
-		ListFilesRequest listFileRequest = new ListFilesRequest(input);
+		//ListFilesRequest listFileRequest = new ListFilesRequest(input);
 		ListFilesResponse listFilesResponse = new ListFilesResponse();
 		
 		listFilesResponse.status = 1;
@@ -180,7 +181,6 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] blockReport(byte[] input) {	//BlockLocationRequest 
-		// TODO Auto-generated method stub
 		BlockReportRequest blockReportRequest = new BlockReportRequest(input);
 		BlockReportResponse blockReportResponse = new BlockReportResponse();
 	
@@ -205,8 +205,6 @@ public class INameNodeServer implements INameNode {
 
 	@Override
 	public byte[] heartBeat(byte[] input) {		//HeartBeatRequest
- 		// TODO Auto-generated method stub
-		
 		HeartBeatRequest heartBeatRequest = new HeartBeatRequest(input);
 		HeartBeatResponse heartBeatResponse = new HeartBeatResponse();
 		DataNodeLocation dataNodeLocation = aliveDataNodes.get(heartBeatRequest.id);
@@ -216,17 +214,26 @@ public class INameNodeServer implements INameNode {
 		return heartBeatResponse.toProto();
 	}
 
-	public INameNodeServer(String file){
+	public INameNodeServer(){
 		try {
-			FileInputStream  fi = new FileInputStream(file);
+			FileInputStream  fi = new FileInputStream(configFile );
 			Scanner sc = new Scanner(fi);
-			replicatioFactor = sc.nextInt();
-			thresholdTime = sc.nextLong();
-			blockNumber = sc.nextInt();
-			// TODO load nameToBlock
+			while(sc.hasNext()){
+				String tmp[] = sc.nextLine().split(",");
+				if(tmp[0].compareTo("replicatioFactor") == 0){
+					replicatioFactor = Integer.parseInt(tmp[1]);
+				}
+				if(tmp[0].compareTo("thresholdTime") == 0){
+					thresholdTime = Integer.parseInt(tmp[1]);
+				}
+				if(tmp[0].compareTo("blockNumber") == 0){
+					blockNumber = Integer.parseInt(tmp[1]);
+				}
+			}
 			sc.close();
+			
+			// TODO load nameToBlock
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -235,10 +242,9 @@ public class INameNodeServer implements INameNode {
 	
 	public static void main(String args[]){
 		try {
-            String name = "NameNode";
-            INameNode nameNode = new INameNodeServer(args[0]);
-            INameNode stub =
-            		(INameNode) UnicastRemoteObject.exportObject((Remote) nameNode, 0);
+			String name = "NameNode";
+            INameNode nameNode = new INameNodeServer();
+            INameNode stub = (INameNode) UnicastRemoteObject.exportObject((Remote) nameNode, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(name, (Remote) stub);
             System.out.println("NameNode bound");

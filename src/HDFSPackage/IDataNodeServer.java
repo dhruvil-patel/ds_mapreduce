@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Timer;
@@ -48,7 +50,7 @@ public class IDataNodeServer implements IDataNode {
 			if(tmp[0].compareTo("host") == 0){
 				NN_IP = new String(tmp[1]);
 			}
-			if(tmp[0].compareTo("datanodedir") == 0){
+			if(tmp[0].compareTo("datanodeDir") == 0){
 				dataNodeDir = new String(tmp[1]);
 			}
 		}
@@ -56,6 +58,7 @@ public class IDataNodeServer implements IDataNode {
 		if(DN_ID == 0 || NN_IP.length() == 0){
 			throw new Exception("Invalid DataNodeID in datanode.config");
 		}
+		
 		Registry registry = LocateRegistry.getRegistry();
 		nameNodeClient = (INameNodeServer) registry.lookup("NameNode");
 		
@@ -103,7 +106,6 @@ public class IDataNodeServer implements IDataNode {
 			try {
 				throw new Exception(file.getName() + " not found");
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -151,6 +153,10 @@ public class IDataNodeServer implements IDataNode {
 		    		dataNode.sendHeartBeat();
 		    	}
 		    	}, 1, 100);
+		    String name = "DataNode";
+            IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject((Remote) dataNode, 0);
+            Registry registry = LocateRegistry.getRegistry();
+            registry.rebind(name, (Remote) stub);
 		} catch (RemoteException | NotBoundException e) {
 			e.printStackTrace();
 		};
