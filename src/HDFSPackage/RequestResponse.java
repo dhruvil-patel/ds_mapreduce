@@ -54,13 +54,13 @@ public class BlockReportResponse {
 			status.add(i);
 	}
 
+	public BlockReportResponse(){
+		status = new ArrayList<Integer>();
+	}
 	public BlockReportResponse(ArrayList<Integer> a) {
 		status = a;
 	}
 
-	public BlockReportResponse() {
-		// TODO Auto-generated constructor stub
-	}
 
 	public byte[] toProto() {
 		HDFS.BlockReportResponse.Builder builder = HDFS.BlockReportResponse.newBuilder();
@@ -101,6 +101,9 @@ public class DataNodeLocation {
 	public DataNodeLocation(int _ip, int _port) {
 		ip=_ip;
 		port = _port;
+	}
+
+	public DataNodeLocation() {
 	}
 
 	public byte[] toProto() {
