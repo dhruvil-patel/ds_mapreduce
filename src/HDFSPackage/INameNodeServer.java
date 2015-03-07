@@ -1,8 +1,10 @@
 package HDFSPackage;
+
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -44,7 +46,8 @@ public class INameNodeServer implements INameNode {
 	 static int blockNumber = 25;   // Initialise from config
 	 int replicatioFactor = 3;		// Initialise from config
 	 long thresholdTime = 200;
-	 private String configFile = "../src/namenode.config";
+	 private String configFile = "namenode.config";
+	 static String NN_IP;
 	
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
 		OpenFileRequest openFileRequest = new OpenFileRequest(input);
@@ -200,6 +203,10 @@ public class INameNodeServer implements INameNode {
 			}
 			blockReportResponse.status.add(1);
 		}
+		
+		aliveDataNodes.put(blockReportRequest.id, blockReportRequest.location);
+		
+		System.out.println("Block Report");
 		return blockReportResponse.toProto();
 	}
 
@@ -211,6 +218,7 @@ public class INameNodeServer implements INameNode {
 		dataNodeLocation.time = System.currentTimeMillis();
 		aliveDataNodes.put(heartBeatRequest.id, dataNodeLocation);
 		heartBeatResponse.status = 1;
+		System.out.println( heartBeatRequest.id + ":Heart Beat");
 		return heartBeatResponse.toProto();
 	}
 
@@ -229,6 +237,9 @@ public class INameNodeServer implements INameNode {
 				if(tmp[0].compareTo("blockNumber") == 0){
 					blockNumber = Integer.parseInt(tmp[1]);
 				}
+				if(tmp[0].compareTo("nameNodeIp") == 0){
+					NN_IP = new String(tmp[1]);
+				}
 			}
 			sc.close();
 			
@@ -246,7 +257,7 @@ public class INameNodeServer implements INameNode {
             INameNode nameNode = new INameNodeServer();
             System.out.println(1);
             INameNode stub = (INameNode) UnicastRemoteObject.exportObject(nameNode, 0);
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(NN_IP);
             registry.rebind(name, stub);
             System.out.println("NameNode bound");
         } catch (Exception e) {

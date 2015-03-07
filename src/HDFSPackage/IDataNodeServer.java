@@ -1,5 +1,6 @@
 package HDFSPackage;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,13 +29,13 @@ public class IDataNodeServer implements IDataNode {
 	int DN_ID;
 	String NN_IP;
 	String configFilePath = "datanode.config";
-	INameNodeServer nameNodeClient;
+	INameNode nameNodeClient;
 	BlockReportRequest blockReport;
-	byte []heartBeat = new HeartBeatRequest(DN_ID).toProto();
+	byte []heartBeat;
 	private String dataNodeDir; 
     
 	public IDataNodeServer() throws Exception {
-		blockReport = new BlockReportRequest(new DataNodeLocation(), new ArrayList<Integer>());
+		blockReport = new BlockReportRequest(DN_ID,new DataNodeLocation(), new ArrayList<Integer>());
 		File file = new File(configFilePath);
 		if(!file.exists()){
 			throw new Exception("datanode.config does not exists");
@@ -48,7 +49,7 @@ public class IDataNodeServer implements IDataNode {
 			if(tmp[0].compareTo("port") == 0){
 				blockReport.location.port = Integer.parseInt(tmp[1]);
 			}
-			if(tmp[0].compareTo("host") == 0){
+			if(tmp[0].compareTo("nameNodeIp") == 0){
 				NN_IP = new String(tmp[1]);
 			}
 			if(tmp[0].compareTo("datanodeDir") == 0){
@@ -63,15 +64,20 @@ public class IDataNodeServer implements IDataNode {
 			throw new Exception("Invalid DataNodeID in datanode.config");
 		}
 		
-		Registry registry = LocateRegistry.getRegistry();
-		nameNodeClient = (INameNodeServer) registry.lookup("NameNode");
+		Registry registry = LocateRegistry.getRegistry(NN_IP);
+		for(String s:registry.list())
+		System.out.println(s);
+		nameNodeClient = (INameNode) registry.lookup("NameNode");
 		
 		blockReport.location.ip = pack(InetAddress.getLocalHost().getAddress());
+		blockReport.id = DN_ID;
+		heartBeat = new HeartBeatRequest(DN_ID).toProto();
 		System.out.println("DataNode IP : " + blockReport.location.ip);
-		
+		System.out.println(InetAddress.getLocalHost().getHostAddress());
 		File folder = new File(dataNodeDir);
 		File[] listOfFiles = folder.listFiles();
 
+		if(listOfFiles != null)
 	    for (File blockFile : listOfFiles) {
 	    	if (blockFile.isFile()) {
 	    		System.out.println("File " + blockFile.getName());
@@ -141,26 +147,33 @@ public class IDataNodeServer implements IDataNode {
 		
 	}
 	
-	private void sendBlockReport() {		
+	private void sendBlockReport() throws RemoteException {		
 		nameNodeClient.blockReport(blockReport.toProto());
 	}
-	private void sendHeartBeat() {
+	private void sendHeartBeat() throws RemoteException {
 		nameNodeClient.heartBeat(heartBeat);
 	}
 	
 	public static void main(String args[]) throws Exception{
 		try {
+			
 			final IDataNodeServer dataNode = new IDataNodeServer();
-		    dataNode.sendBlockReport();
+			String name = "DataNode";
+            IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject(dataNode, 0);
+            Registry registry = LocateRegistry.getRegistry();
+            registry.rebind(name, stub);
+            System.out.println("DataNode RMI Registered");
+			dataNode.sendBlockReport();
 		    new Timer().schedule(new TimerTask() {
 		    	public void run()  {
-		    		dataNode.sendHeartBeat();
+		    		try {
+						dataNode.sendHeartBeat();
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
 		    	}
 		    	}, 1, heartbeatTimeInterval);
-		    String name = "DataNode";
-            IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject((Remote) dataNode, 0);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(name, (Remote) stub);
+		    
 		} catch (RemoteException | NotBoundException e) {
 			e.printStackTrace();
 		};

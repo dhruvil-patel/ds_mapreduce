@@ -1,14 +1,16 @@
 package HDFSPackage;
 
+
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 public interface IDataNode extends Remote{
 
 	/* ReadBlockResponse readBlock(ReadBlockRequest)) */
 	/* Method to read data from any block given block-number */
-	byte[] readBlock(byte[] ReadBlockRequest);
+	byte[] readBlock(byte[] ReadBlockRequest) throws RemoteException;
 	
 	/* WriteBlockResponse writeBlock(WriteBlockRequest) */
 	/* Method to write data to a specific block */
-	byte[] writeBlock(byte[] WriteBlockRequest);
+	byte[] writeBlock(byte[] WriteBlockRequest) throws RemoteException;
 }

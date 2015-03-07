@@ -1,2 +1,2 @@
 #/usr/java/jdk1.7.0_75/bin/rmiregistry&
-java -classpath .:./src:./bin:`realpath ./bin`:/usr/java/jdk1.7.0_75/bin/  -Djava.rmi.server.hostname=172.17.42.1 -Djava.security.policy=server.policy -Djava.rmi.server.codebase=file:/`realpath .` HDFSPackage.INameNodeServer 
+java -Djava.security.policy=server.policy HDFSPackage.INameNodeServer 
