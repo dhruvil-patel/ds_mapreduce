@@ -74,6 +74,7 @@ public class BlockReportResponse {
 public class DataNodeLocation {
 	public int ip;
 	public int port;
+	public long time;
 
 	public DataNodeLocation(byte[] input) {
 		try {
@@ -480,6 +481,10 @@ public class ListFilesResponse {
 		fileNames = new ArrayList<String>();
 		for(String s : builder.getFileNamesList())
 			fileNames.add(s);
+	}
+
+	public ListFilesResponse() {
+		// TODO Auto-generated constructor stub
 	}
 
 	public byte[] toProto() {
