@@ -1,5 +1,8 @@
 package HDFSPackage;
-public interface IDataNode {
+
+import java.rmi.Remote;
+
+public interface IDataNode extends Remote{
 
 	/* ReadBlockResponse readBlock(ReadBlockRequest)) */
 	/* Method to read data from any block given block-number */

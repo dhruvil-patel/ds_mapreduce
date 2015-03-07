@@ -24,6 +24,7 @@ import HDFSPackage.RequestResponse.WriteBlockResponse;
 import HDFSPackage.RequestResponse.HeartBeatRequest;
 
 public class IDataNodeServer implements IDataNode {
+	private static long heartbeatTimeInterval = 5000;
 	int DN_ID;
 	String NN_IP;
 	String configFilePath = "datanode.config";
@@ -52,6 +53,9 @@ public class IDataNodeServer implements IDataNode {
 			}
 			if(tmp[0].compareTo("datanodeDir") == 0){
 				dataNodeDir = new String(tmp[1]);
+			}
+			if(tmp[0].compareTo("heartbeatTimeInterval") == 0){
+				heartbeatTimeInterval = Integer.parseInt(tmp[1]);
 			}
 		}
 		sc.close();
@@ -152,7 +156,7 @@ public class IDataNodeServer implements IDataNode {
 		    	public void run()  {
 		    		dataNode.sendHeartBeat();
 		    	}
-		    	}, 1, 100);
+		    	}, 1, heartbeatTimeInterval);
 		    String name = "DataNode";
             IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject((Remote) dataNode, 0);
             Registry registry = LocateRegistry.getRegistry();

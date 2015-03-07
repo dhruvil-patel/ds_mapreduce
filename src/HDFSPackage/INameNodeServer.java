@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -43,9 +44,8 @@ public class INameNodeServer implements INameNode {
 	 static int blockNumber = 25;   // Initialise from config
 	 int replicatioFactor = 3;		// Initialise from config
 	 long thresholdTime = 200;
-	private String configFile = "namenode.config";
+	 private String configFile = "../src/namenode.config";
 	
-	@Override
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
 		OpenFileRequest openFileRequest = new OpenFileRequest(input);
 		OpenFileResponse  openFileResponse = new OpenFileResponse();
@@ -214,7 +214,7 @@ public class INameNodeServer implements INameNode {
 		return heartBeatResponse.toProto();
 	}
 
-	public INameNodeServer(){
+	public INameNodeServer() throws RemoteException{
 		try {
 			FileInputStream  fi = new FileInputStream(configFile );
 			Scanner sc = new Scanner(fi);
@@ -244,9 +244,10 @@ public class INameNodeServer implements INameNode {
 		try {
 			String name = "NameNode";
             INameNode nameNode = new INameNodeServer();
-            INameNode stub = (INameNode) UnicastRemoteObject.exportObject((Remote) nameNode, 0);
+            System.out.println(1);
+            INameNode stub = (INameNode) UnicastRemoteObject.exportObject(nameNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(name, (Remote) stub);
+            registry.rebind(name, stub);
             System.out.println("NameNode bound");
         } catch (Exception e) {
            
