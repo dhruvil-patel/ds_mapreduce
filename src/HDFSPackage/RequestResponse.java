@@ -1,4 +1,5 @@
 package HDFSPackage;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -10,10 +11,12 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 public interface RequestResponse{ 
 public class BlockReportRequest {
+	public int id;
 	public DataNodeLocation location;
 	public ArrayList<Integer> blockNumbers;
-	public BlockReportRequest(DataNodeLocation _location, ArrayList<Integer> _blockNumbers){
+	public BlockReportRequest(int _id, DataNodeLocation _location, ArrayList<Integer> _blockNumbers){
 		location = _location;
+		id = _id;
 		blockNumbers = _blockNumbers;
 	}
 	
@@ -25,6 +28,7 @@ public class BlockReportRequest {
 			e.printStackTrace();
 		}
 		blockNumbers = new ArrayList<Integer>();
+		id = builder.getId();
 		for(int i: builder.getBlockNumbersList())
 			blockNumbers.add(i);
 		location = new DataNodeLocation(builder.getLocation());
@@ -33,6 +37,7 @@ public class BlockReportRequest {
 	public byte[] toProto() {
 		HDFS.BlockReportRequest.Builder builder = HDFS.BlockReportRequest.newBuilder();
 		builder.setLocation(location.toProtoObject());
+		builder.setId(id);
 		for(int i : blockNumbers)
 			builder.addBlockNumbers(i);	
 		return builder.build().toByteArray();
