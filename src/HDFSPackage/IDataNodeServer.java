@@ -123,7 +123,7 @@ public class IDataNodeServer implements IDataNode {
 	@Override
 	public byte[] writeBlock(byte[] writeBlockRequest) {
 		WriteBlockRequest writeBlock = new WriteBlockRequest(writeBlockRequest);
-		File file = new File(DN_ID + "_" + writeBlock.blockInfo);
+		File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
 		try {
 			Files.write(file.toPath(), writeBlock.data);
 			
