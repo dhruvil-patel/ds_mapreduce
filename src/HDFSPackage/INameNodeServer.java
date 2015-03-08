@@ -47,12 +47,13 @@ public class INameNodeServer implements INameNode {
 	 int replicatioFactor = 3;		// Initialise from config
 	 long thresholdTime = 200;
 	 private String configFile = "namenode.config";
+	private String nameNodeDir;
 	 static String NN_IP;
 	
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
 		OpenFileRequest openFileRequest = new OpenFileRequest(input);
 		OpenFileResponse  openFileResponse = new OpenFileResponse();
-				
+		openFileRequest.fileName = nameNodeDir + "/" +openFileRequest.fileName;
 		if(openFileRequest.forRead == true){     //read request
 			if(nameToBlocks.containsKey(openFileRequest.fileName)){   //file exists     
 				fileHandle++;
@@ -63,26 +64,20 @@ public class INameNodeServer implements INameNode {
 			}else{			// file not exists		
 				openFileResponse.status = -1;
 				openFileResponse.handle = -1;
-				
+				openFileResponse.blockNums = new ArrayList<Integer>();
 			}
 		}else{				//write request
 			fileHandle++;
 			handleToname.put(fileHandle,openFileRequest.fileName);
 			openFileResponse.handle = fileHandle;
-			
-			/**
-			 * if we have to create new file every time then we remove
-			 */
-			if(nameToBlocks.containsKey(openFileRequest.fileName)){   //file exists     
-				openFileResponse.status = 1;
-				openFileResponse.blockNums = (ArrayList<Integer>) nameToBlocks.get(openFileRequest.fileName);
-			}else{			// file does not exist.
-				ArrayList<Integer> block = new ArrayList<Integer>();
-				nameToBlocks.put(openFileRequest.fileName, block);
-				openFileResponse.status = 2;
-							
-			}
+
+			// Assume that file does not exist.
+			ArrayList<Integer> block = new ArrayList<Integer>();
+			nameToBlocks.put(openFileRequest.fileName, block);
+			openFileResponse.status = 1;
+			openFileResponse.blockNums = new ArrayList<Integer>();
 		}
+		
 		return openFileResponse.toProto();
 	}
 
@@ -98,30 +93,38 @@ public class INameNodeServer implements INameNode {
 		}
 		return closeFileResponse.toProto();
 	}
-
+	boolean printmap = false;
 	@Override
 	public byte[] getBlockLocations(byte[] input) { //BlockLocationRequest
+		if(!printmap){
+			System.out.println("Map");
+			for(Integer b : blockToNodes.keySet()){
+				System.out.println(b +": " + blockToNodes.get(b).size());
+			}
+			printmap = true;
+		}
 		BlockLocationRequest blockLocationRequest = new BlockLocationRequest(input);
-		BlockLocationResponse blockReLocationResponse = new BlockLocationResponse();
-		blockReLocationResponse.status = 1; 
-		
+		BlockLocationResponse blockLocationResponse = new BlockLocationResponse();
+		blockLocationResponse.status = 1; 
+		System.out.println("getBlockreq # of blocks :"+blockLocationRequest.blockNums.size());
 		for( int b : blockLocationRequest.blockNums){
 			BlockLocations block = new BlockLocations();
 			block.blockNumber = b;
 			if(blockToNodes.containsKey(b)){
-				block.locations = blockToNodes.get(b);
-				blockReLocationResponse.blockLocations.add(block);
+				block.locations = new ArrayList<RequestResponse.DataNodeLocation>(blockToNodes.get(b));
+				blockLocationResponse.blockLocations.add(block);
+				System.out.println("bl size : "+block.locations.size());
 			}else
-				blockReLocationResponse.status = 0;
+				blockLocationResponse.status = 0;
 		}
 		//set status;
-		
-		return blockReLocationResponse.toProto();
+		System.out.println("# of blocks " + blockLocationResponse.blockLocations.size());
+		return blockLocationResponse.toProto();
 	}
 
 	@Override
 	public byte[] assignBlock(byte[] input) {   //AssignBlockRequest 
-		
+		System.out.println("Assignblock");
 		AssignBlockRequest assignBlockRequest = new AssignBlockRequest(input);
 		AssignBlockResponse assignBlockResponse = new AssignBlockResponse();
 		
@@ -132,13 +135,16 @@ public class INameNodeServer implements INameNode {
 		int size = aliveDataNodes.size();
 		Random randomGen = new Random();
 		int i = 0;
-		while(node.size() < replicatioFactor && i < allNodes.size()){
+		while(node.size() < replicatioFactor){
 			int random = randomGen.nextInt(size);
+			System.out.println("random "+random);
+			System.out.println(allNodes.get(random).time + ":" + (System.currentTimeMillis() - thresholdTime));
 			if(allNodes.get(random).time >= System.currentTimeMillis() - thresholdTime){
 				node.add(allNodes.get(random));
 			}
 			i++;
 		}
+		System.out.println("Random selected" + node.size());
 		/**
 		 * Code to update nameToBlock mapping
 		 */
@@ -166,7 +172,9 @@ public class INameNodeServer implements INameNode {
 		allNodes.addAll(node);
 		assignBlockResponse.newBlock.blockNumber = blockNumber;
 		assignBlockResponse.newBlock.locations = allNodes;
-		assignBlockResponse.status = 1 ;  
+		assignBlockResponse.status = 1 ;
+		
+		System.out.println(assignBlockResponse.newBlock.blockNumber +":" +assignBlockResponse.newBlock.locations.size());
 		
 		return assignBlockResponse.toProto();
 	}
@@ -190,9 +198,16 @@ public class INameNodeServer implements INameNode {
 		ArrayList <DataNodeLocation> dataNode;
 		for(int b : blockReportRequest.blockNumbers){
 			if(blockToNodes.containsKey(b)){
-				dataNode = blockToNodes.get(b); 
-				if(!(dataNode.contains(blockReportRequest.location))) {
-					System.out.println(b);
+				dataNode = blockToNodes.get(b);
+				boolean contains = false;
+				for(DataNodeLocation d : dataNode){
+					if(d.ip == blockReportRequest.location.ip){
+						contains = true;
+						break;
+					}
+				}
+				
+				if(!contains) {
 					dataNode.add(blockReportRequest.location);
 					blockToNodes.put(b,dataNode);
 				}
@@ -203,7 +218,7 @@ public class INameNodeServer implements INameNode {
 			}
 			blockReportResponse.status.add(1);
 		}
-		
+		blockReportRequest.location.time = System.currentTimeMillis();
 		aliveDataNodes.put(blockReportRequest.id, blockReportRequest.location);
 		
 		System.out.println("Block Report");
@@ -239,6 +254,9 @@ public class INameNodeServer implements INameNode {
 				}
 				if(tmp[0].compareTo("nameNodeIp") == 0){
 					NN_IP = new String(tmp[1]);
+				}
+				if(tmp[0].compareTo("nameNodeDir") == 0){
+					nameNodeDir = new String(tmp[1]);
 				}
 			}
 			sc.close();

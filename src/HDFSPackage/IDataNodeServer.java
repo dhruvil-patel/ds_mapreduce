@@ -3,6 +3,7 @@ package HDFSPackage;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.rmi.NotBoundException;
@@ -26,9 +27,10 @@ import HDFSPackage.RequestResponse.HeartBeatRequest;
 
 public class IDataNodeServer implements IDataNode {
 	private static long heartbeatTimeInterval = 5000;
+	private static long blockReportTimeInterval;
 	int DN_ID;
 	String NN_IP;
-	String configFilePath = "datanode.config";
+	public static String configFilePath = "datanode.config";
 	INameNode nameNodeClient;
 	BlockReportRequest blockReport;
 	byte []heartBeat;
@@ -58,6 +60,10 @@ public class IDataNodeServer implements IDataNode {
 			if(tmp[0].compareTo("heartbeatTimeInterval") == 0){
 				heartbeatTimeInterval = Integer.parseInt(tmp[1]);
 			}
+			if(tmp[0].compareTo("blockReportTimeInterval") == 0){
+				blockReportTimeInterval = Integer.parseInt(tmp[1]);
+			}
+			
 		}
 		sc.close();
 		if(DN_ID == 0 || NN_IP.length() == 0){
@@ -65,8 +71,6 @@ public class IDataNodeServer implements IDataNode {
 		}
 		
 		Registry registry = LocateRegistry.getRegistry(NN_IP);
-		for(String s:registry.list())
-		System.out.println(s);
 		nameNodeClient = (INameNode) registry.lookup("NameNode");
 		
 		blockReport.location.ip = pack(InetAddress.getLocalHost().getAddress());
@@ -74,6 +78,7 @@ public class IDataNodeServer implements IDataNode {
 		heartBeat = new HeartBeatRequest(DN_ID).toProto();
 		System.out.println("DataNode IP : " + blockReport.location.ip);
 		System.out.println(InetAddress.getLocalHost().getHostAddress());
+		
 		File folder = new File(dataNodeDir);
 		File[] listOfFiles = folder.listFiles();
 
@@ -111,7 +116,7 @@ public class IDataNodeServer implements IDataNode {
 	@Override
 	public byte[] readBlock(byte[] readBlockRequest) {
 		ReadBlockRequest readBlock = new ReadBlockRequest(readBlockRequest);
-		File file = new File(DN_ID + "_" +readBlock.blockNumber);
+		File file = new File(dataNodeDir+"/"+DN_ID + "_" +readBlock.blockNumber);
 		if(!file.exists()){
 			try {
 				throw new Exception(file.getName() + " not found");
@@ -121,27 +126,51 @@ public class IDataNodeServer implements IDataNode {
 		}
 		
 		try {
-			 return new ReadBlockResponse(1,Files.readAllBytes(file.toPath())).toProto();
+			return new ReadBlockResponse(1,Files.readAllBytes(file.toPath())).toProto();
 		} catch (IOException e) {
-			e.printStackTrace();
-		}finally{
 			System.out.println("Finally:readBlock failed");
-			return new ReadBlockResponse(0,null).toProto();
+			e.printStackTrace();
 		}
+		return new ReadBlockResponse().toProto();
 	}
 
 	@Override
-	public byte[] writeBlock(byte[] writeBlockRequest) {
+	public byte[] writeBlock(byte[] writeBlockRequest) throws RemoteException {
 		WriteBlockRequest writeBlock = new WriteBlockRequest(writeBlockRequest);
+<<<<<<< HEAD
 		File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
+=======
+		File file = new File(dataNodeDir+"/"+DN_ID + "_" + writeBlock.blockInfo.blockNumber);
+		System.out.println(file.getAbsolutePath());
+>>>>>>> ba0177248b9ef405e6f95f017aa1748f59196208
 		try {
 			Files.write(file.toPath(), writeBlock.data);
-			
+			int index = -1;
+			for(DataNodeLocation dnl : writeBlock.blockInfo.locations){
+				index++;
+				//to be on safeside
+				if(dnl.ip == blockReport.location.ip)
+					continue;
+				Registry registry = LocateRegistry.getRegistry(dnl.ip);
+				IDataNode dataNodeClient = (IDataNode) registry.lookup("DataNode");
+				
+				WriteBlockRequest writeBlockRequest1 = new WriteBlockRequest(writeBlock.blockInfo, writeBlock.data);
+				writeBlockRequest1.blockInfo.locations.remove(index);
+				byte []tmp = dataNodeClient.writeBlock(writeBlockRequest1.toProto());
+				WriteBlockResponse writeBlockResponse = new WriteBlockResponse(tmp);
+				if(writeBlockResponse.status == 1)
+					break;
+				else{
+					//TODO Mark datanode as down
+				}
+			}
+			blockReport.blockNumbers.add(writeBlock.blockInfo.blockNumber);
+			sendBlockReport();
 			return new WriteBlockResponse(1).toProto();
 		} catch (IOException e) {
+			System.out.println("Finally:writeBlock failed");
 			e.printStackTrace();
 		}finally{
-			System.out.println("Finally:writeBlock failed");
 			return new WriteBlockResponse(0).toProto();
 		}
 		
@@ -156,7 +185,10 @@ public class IDataNodeServer implements IDataNode {
 	
 	public static void main(String args[]) throws Exception{
 		try {
-			
+			if(args.length > 0 && args[0].compareTo("") != 0){
+				configFilePath = args[0];
+				System.out.println(configFilePath);
+			}
 			final IDataNodeServer dataNode = new IDataNodeServer();
 			String name = "DataNode";
             IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject(dataNode, 0);
@@ -173,6 +205,16 @@ public class IDataNodeServer implements IDataNode {
 					}
 		    	}
 		    	}, 1, heartbeatTimeInterval);
+		    
+		    new Timer().schedule(new TimerTask() {
+		    	public void run()  {
+		    		try {
+						dataNode.sendBlockReport();
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+		    	}
+		    	}, 1, blockReportTimeInterval);
 		    
 		} catch (RemoteException | NotBoundException e) {
 			e.printStackTrace();

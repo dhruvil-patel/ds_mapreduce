@@ -1,4 +1,5 @@
 cd /HDFS/bin
-mkdir data
+rm -r ./data
+mkdir ./data
 rmiregistry&
-java -Djava.security.policy=client.policy HDFSPackage.IDataNodeServer
+java -Djava.security.policy=client.policy HDFSPackage.IDataNodeServer "$1"
