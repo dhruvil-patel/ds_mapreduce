@@ -87,7 +87,6 @@ public class DataNodeLocation {
 			 ip = location.getIp();
 			 port = location.getPort();
 		} catch (InvalidProtocolBufferException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -161,7 +160,6 @@ public class HeartBeatResponse {
 	}
 
 	public HeartBeatResponse() {
-		// TODO Auto-generated constructor stub
 	}
 	public byte[] toProto() {
 		HDFS.HeartBeatResponse.Builder builder = HDFS.HeartBeatResponse.newBuilder();
@@ -191,9 +189,11 @@ public class WriteBlockRequest {
 			}
 		}
 	}
-
+	public WriteBlockRequest(){
+		blockInfo = new BlockLocations();
+	}
 	public WriteBlockRequest(BlockLocations _blockLocations,byte _data[]) {
-		blockInfo =_blockLocations;
+		blockInfo = _blockLocations;
 		data = _data;
 	}
 
@@ -236,7 +236,7 @@ public class BlockLocations {
 	}
 	
 	public BlockLocations() {
-		// TODO Auto-generated constructor stub
+		locations = new ArrayList<RequestResponse.DataNodeLocation>();
 	}
 	public HDFS.BlockLocations.Builder toProtoObject() {
 		HDFS.BlockLocations.Builder builder = HDFS.BlockLocations.newBuilder();
@@ -321,7 +321,6 @@ public class CloseFileResponse {
 	}
 
 	public CloseFileResponse() {
-		// TODO Auto-generated constructor stub
 	}
 	public byte[] toProto() {
 		HDFS.CloseFileResponse.Builder builder = HDFS.CloseFileResponse.newBuilder();
@@ -331,22 +330,31 @@ public class CloseFileResponse {
 }
 
 public class BlockLocationRequest {
-	ArrayList<Integer> blockNums;
+	public ArrayList<Integer> blockNums;
 
-	BlockLocationRequest(byte[] input) {
-		HDFS.BlockReportRequest builder = null;
+	public BlockLocationRequest(ArrayList<Integer> _b){
+		blockNums = new ArrayList<Integer>(_b);
+	}
+	public BlockLocationRequest(byte[] input) {
+		System.out.println("inp len "+input.length);
+		HDFS.BlockLocationRequest builder = null;
 		try {
-			builder= HDFS.BlockReportRequest.parseFrom(input);
+			builder= HDFS.BlockLocationRequest.parseFrom(input);
+			System.out.println(builder.getBlockNumsCount());
 		} catch (InvalidProtocolBufferException e) {
 			e.printStackTrace();
 		}
-		blockNums = (ArrayList<Integer>) builder.getBlockNumbersList();
+		blockNums = new ArrayList<Integer>();
+		for(int i : builder.getBlockNumsList())
+			blockNums.add(i);
+		System.out.println("cons : "+blockNums.size());
 	}
 
 	public byte[] toProto() {
 		HDFS.BlockLocationRequest.Builder builder = HDFS.BlockLocationRequest.newBuilder();
 		for (int i:blockNums)
-			builder.addBlockNums(i);	
+			builder.addBlockNums(i);
+		System.out.println("blocklocation req Toproto" + blockNums.size());
 		return builder.build().toByteArray();
 	}
 }
@@ -374,7 +382,7 @@ public class BlockLocationResponse {
 	}
 
 	public BlockLocationResponse() {
-		// TODO Auto-generated constructor stub
+		blockLocations = new ArrayList<RequestResponse.BlockLocations>();
 	}
 	public byte[] toProto() {
 		HDFS.BlockLocationResponse.Builder builder = HDFS.BlockLocationResponse.newBuilder();
@@ -431,7 +439,7 @@ public class AssignBlockResponse {
 	}
 
 	public AssignBlockResponse() {
-		// TODO Auto-generated constructor stub
+		newBlock = new BlockLocations();
 	}
 
 	public byte[] toProto() {
@@ -489,7 +497,7 @@ public class ListFilesResponse {
 	}
 
 	public ListFilesResponse() {
-		// TODO Auto-generated constructor stub
+		fileNames = new ArrayList<String>();
 	}
 
 	public byte[] toProto() {
@@ -554,7 +562,7 @@ public class OpenFileResponse {
 	}
 
 	public OpenFileResponse() {
-		// TODO Auto-generated constructor stub
+		blockNums = new ArrayList<Integer>();
 	}
 	public byte[] toProto() {
 		HDFS.OpenFileResponse.Builder builder = HDFS.OpenFileResponse.newBuilder();
@@ -594,6 +602,10 @@ public class ReadBlockResponse {
 	public int status;
 	public byte data[];
 
+	public ReadBlockResponse(){
+		status = 0;
+		data = new byte[1];
+	}
 	public ReadBlockResponse(int _s, byte[] _d){
 		status = _s;
 		data = _d;
