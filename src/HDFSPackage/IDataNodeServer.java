@@ -137,12 +137,12 @@ public class IDataNodeServer implements IDataNode {
 	@Override
 	public byte[] writeBlock(byte[] writeBlockRequest) throws RemoteException {
 		WriteBlockRequest writeBlock = new WriteBlockRequest(writeBlockRequest);
-<<<<<<< HEAD
-		File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
-=======
+
+		//File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
+
 		File file = new File(dataNodeDir+"/"+DN_ID + "_" + writeBlock.blockInfo.blockNumber);
 		System.out.println(file.getAbsolutePath());
->>>>>>> ba0177248b9ef405e6f95f017aa1748f59196208
+
 		try {
 			Files.write(file.toPath(), writeBlock.data);
 			int index = -1;
