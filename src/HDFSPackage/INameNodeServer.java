@@ -50,6 +50,7 @@ public class INameNodeServer implements INameNode {
 	 private String configFile = "namenode.config";
 	 private String nameNodeDir;
 	 static String NN_IP;
+	 String blockNumberFile = "blocknumber";
 	
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
 		OpenFileRequest openFileRequest = new OpenFileRequest(input);
@@ -70,7 +71,7 @@ public class INameNodeServer implements INameNode {
 		}else{				//write request
 					
 			// Assume that file does not exist.
-			if(!openForWrite.contains(openFileRequest.fileName)){   //File does not exist.
+			if(!nameToBlocks.containsKey(openFileRequest.fileName) && !openForWrite.contains(openFileRequest.fileName)){   //File does not exist.
 				fileHandle++;
 				openForWrite.add(openFileRequest.fileName);
 				handleToname.put(fileHandle,openFileRequest.fileName);
@@ -148,7 +149,7 @@ public class INameNodeServer implements INameNode {
 		int size = aliveDataNodes.size();
 		Random randomGen = new Random();
 		int i = 0;
-		while(node.size() < replicatioFactor){
+		while(node.size()< Math.min(replicatioFactor,allNodes.size())){
 			int random = randomGen.nextInt(size);
 			System.out.println("random "+random);
 			System.out.println(allNodes.get(random).time + ":" + (System.currentTimeMillis() - thresholdTime));
@@ -170,11 +171,23 @@ public class INameNodeServer implements INameNode {
 		blockList.add(blockNumber);	
 		nameToBlocks.put(file,blockList);	
 		
+		// File to block 
 		try {
 			FileWriter fw = new FileWriter(file,true);
 			BufferedWriter bw = new BufferedWriter(fw);
 			String data = Integer.toString(blockNumber) + ",";
 			bw.append(data);
+			bw.flush();
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// blockNumber Persistence 
+		try {
+			FileWriter fw = new FileWriter("blocknumber");
+			BufferedWriter bw = new BufferedWriter(fw);
+			String data = Integer.toString(blockNumber);
+			bw.write(data);
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
@@ -271,8 +284,14 @@ public class INameNodeServer implements INameNode {
 				if(tmp[0].compareTo("nameNodeDir") == 0){
 					nameNodeDir = new String(tmp[1]);
 				}
+				
 			}
+			
 			sc.close();
+			
+			fi = new FileInputStream(blockNumberFile);
+			sc = new Scanner(fi);
+			blockNumber = sc.nextInt();
 			
 			// TODO load nameToBlock
 		} catch (IOException e) {

@@ -70,14 +70,16 @@ public class IDataNodeServer implements IDataNode {
 			throw new Exception("Invalid DataNodeID in datanode.config");
 		}
 		
+		System.out.println("NN_IP :" +NN_IP);
 		Registry registry = LocateRegistry.getRegistry(NN_IP);
 		nameNodeClient = (INameNode) registry.lookup("NameNode");
 		
-		blockReport.location.ip = pack(InetAddress.getLocalHost().getAddress());
+		blockReport.location.ip = pack(InetAddress.getAllByName("192.168.150.2")[0].getAddress());
+		System.out.println("My ip " + InetAddress.getAllByName("192.168.150.2")[0]);
 		blockReport.id = DN_ID;
 		heartBeat = new HeartBeatRequest(DN_ID).toProto();
 		System.out.println("DataNode IP : " + blockReport.location.ip);
-		System.out.println(InetAddress.getLocalHost().getHostAddress());
+		//System.out.println(InetAddress.getLocalHost().getHostAddress());
 		
 		File folder = new File(dataNodeDir);
 		File[] listOfFiles = folder.listFiles();
