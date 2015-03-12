@@ -50,7 +50,7 @@ public class HDFSAPI {
 		OpenFileRequest openFileRequest = new OpenFileRequest(HDFSFileName,true);
 		OpenFileResponse openFileResponse = new OpenFileResponse(nameNodeClient.openFile(openFileRequest.toProto()));
 		System.out.println("copyFromHDFS: #of block"+ openFileResponse.blockNums.size());
-		if(openFileResponse.status == 0){
+		if(openFileResponse.status != 1){
 			throw new FileNotFoundException("File Not found");
 		}
 		BlockLocationRequest blockLocationRequest = new BlockLocationRequest(openFileResponse.blockNums);
@@ -77,10 +77,8 @@ public class HDFSAPI {
 					}else{
 						//TODO Mark dataNode as down
 					}
-				} catch (NotBoundException e) {
+				} catch (NotBoundException | IOException e) {
 					System.out.println("Failed to connect datanode " + dnl.ip );
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
 				
 			}
@@ -113,17 +111,15 @@ public class HDFSAPI {
 		OpenFileResponse openFileResponse = new OpenFileResponse(tmp);
 		handle = openFileResponse.handle;
 		System.out.println(handle);
-		if(openFileResponse.status == 0){
+		if(openFileResponse.status != 1){
 			throw new FileNotFoundException("Unable to create file on NameNode");
 		}
 		RandomAccessFile fd = new RandomAccessFile(localFileName, "r");
 		int lastread;
 		while((lastread = fd.read(buffer))>0){
-			System.out.println("1");
 			AssignBlockRequest assignBlockRequest = new AssignBlockRequest(handle);
 			tmp = nameNodeClient.assignBlock(assignBlockRequest.toProto());
 			AssignBlockResponse assignBlockResponse = new AssignBlockResponse(tmp);
-			System.out.println("2");
 			int index = -1;
 			for(DataNodeLocation dnl : assignBlockResponse.newBlock.locations){
 				index++;
