@@ -41,13 +41,14 @@ public class INameNodeServer implements INameNode {
 	 HashMap<Integer, String> handleToname = new HashMap <Integer,String> ();
 	 HashMap<Integer, ArrayList<DataNodeLocation>> blockToNodes = new HashMap <Integer,ArrayList<DataNodeLocation>>();
 	 HashMap<Integer,DataNodeLocation> aliveDataNodes = new HashMap<Integer,DataNodeLocation>();
-	  
+	 Set<String> openForWrite = new HashSet<String>();
+	 
 	 static int fileHandle = 0;
 	 static int blockNumber = 25;   // Initialise from config
 	 int replicatioFactor = 3;		// Initialise from config
 	 long thresholdTime = 200;
 	 private String configFile = "namenode.config";
-	private String nameNodeDir;
+	 private String nameNodeDir;
 	 static String NN_IP;
 	
 	public byte[] openFile(byte[] input) {   //OpenFileResponse
@@ -55,7 +56,7 @@ public class INameNodeServer implements INameNode {
 		OpenFileResponse  openFileResponse = new OpenFileResponse();
 		openFileRequest.fileName = nameNodeDir + "/" +openFileRequest.fileName;
 		if(openFileRequest.forRead == true){     //read request
-			if(nameToBlocks.containsKey(openFileRequest.fileName)){   //file exists     
+			if(nameToBlocks.containsKey(openFileRequest.fileName) && !openForWrite.contains(openFileRequest.fileName)){   //file exists     
 				fileHandle++;
 				handleToname.put(fileHandle,openFileRequest.fileName);
 				openFileResponse.status = 1;
@@ -67,15 +68,23 @@ public class INameNodeServer implements INameNode {
 				openFileResponse.blockNums = new ArrayList<Integer>();
 			}
 		}else{				//write request
-			fileHandle++;
-			handleToname.put(fileHandle,openFileRequest.fileName);
-			openFileResponse.handle = fileHandle;
-
+					
 			// Assume that file does not exist.
-			ArrayList<Integer> block = new ArrayList<Integer>();
-			nameToBlocks.put(openFileRequest.fileName, block);
-			openFileResponse.status = 1;
-			openFileResponse.blockNums = new ArrayList<Integer>();
+			if(!openForWrite.contains(openFileRequest.fileName)){   //File does not exist.
+				fileHandle++;
+				openForWrite.add(openFileRequest.fileName);
+				handleToname.put(fileHandle,openFileRequest.fileName);
+				ArrayList<Integer> block = new ArrayList<Integer>();
+				nameToBlocks.put(openFileRequest.fileName, block);
+				openFileResponse.status = 1;
+				openFileResponse.handle = fileHandle;
+				openFileResponse.blockNums = new ArrayList<Integer>();
+			}
+			else{			// File already open for write.
+				openFileResponse.status = -1;
+				openFileResponse.handle = -1;
+				openFileResponse.blockNums = new ArrayList<Integer>();
+			}
 		}
 		
 		return openFileResponse.toProto();
@@ -85,9 +94,13 @@ public class INameNodeServer implements INameNode {
 	public byte[] closeFile(byte[] input) { //CloseFileRequest
 		CloseFileRequest closeFileRequest = new CloseFileRequest(input);
 		CloseFileResponse closeFileResponse = new CloseFileResponse();
-		if(handleToname.containsKey(closeFileRequest.handle)){			
+		if(handleToname.containsKey(closeFileRequest.handle)){
+			String openedFile = handleToname.get(closeFileRequest.handle);
+			if(openForWrite.contains(openedFile)){
+				openForWrite.remove(openedFile);
+			}
+			handleToname.remove(closeFileRequest.handle);
 			closeFileResponse.status = 1;
-			handleToname.remove(closeFileRequest.handle);     
 		}else{					
 			closeFileResponse.status = -1;
 		}
