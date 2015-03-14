@@ -43,6 +43,7 @@ public class IDataNodeServer implements IDataNode {
 			throw new Exception("datanode.config does not exists");
 		}
 		Scanner sc = new Scanner(file);
+		blockReport.location.ip = pack(InetAddress.getLocalHost().getAddress());
 		while(sc.hasNext()){
 			String tmp[] = sc.nextLine().split(",");
 			if(tmp[0].compareTo("id") == 0){
@@ -63,6 +64,10 @@ public class IDataNodeServer implements IDataNode {
 			if(tmp[0].compareTo("blockReportTimeInterval") == 0){
 				blockReportTimeInterval = Integer.parseInt(tmp[1]);
 			}
+			if(tmp[0].compareTo("dataNodeIp") == 0){
+				blockReport.location.ip = pack(InetAddress.getAllByName(tmp[1])[0].getAddress());
+			}
+			
 			
 		}
 		sc.close();
@@ -74,7 +79,6 @@ public class IDataNodeServer implements IDataNode {
 		Registry registry = LocateRegistry.getRegistry(NN_IP);
 		nameNodeClient = (INameNode) registry.lookup("NameNode");
 		
-		blockReport.location.ip = pack(InetAddress.getAllByName("192.168.150.2")[0].getAddress());
 		System.out.println("My ip " + InetAddress.getAllByName("192.168.150.2")[0]);
 		blockReport.id = DN_ID;
 		heartBeat = new HeartBeatRequest(DN_ID).toProto();

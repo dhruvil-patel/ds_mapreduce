@@ -305,7 +305,7 @@ public class INameNodeServer implements INameNode {
 		try {
 			String name = "NameNode";
             INameNode nameNode = new INameNodeServer();
-            System.out.println(1);
+            System.out.println("1" + NN_IP);
             INameNode stub = (INameNode) UnicastRemoteObject.exportObject(nameNode, 0);
             Registry registry = LocateRegistry.getRegistry(NN_IP);
             registry.rebind(name, stub);
