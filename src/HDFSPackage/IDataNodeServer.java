@@ -66,6 +66,7 @@ public class IDataNodeServer implements IDataNode {
 			}
 			if(tmp[0].compareTo("dataNodeIp") == 0){
 				blockReport.location.ip = pack(InetAddress.getAllByName(tmp[1])[0].getAddress());
+				//System.out.println("DataNode IP : " + InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
 			}
 			
 			
@@ -79,10 +80,10 @@ public class IDataNodeServer implements IDataNode {
 		Registry registry = LocateRegistry.getRegistry(NN_IP);
 		nameNodeClient = (INameNode) registry.lookup("NameNode");
 		
-		System.out.println("My ip " + InetAddress.getAllByName("192.168.150.2")[0]);
+		//System.out.println("My ip " + InetAddress.getAllByName("192.168.150.2")[0]);
 		blockReport.id = DN_ID;
 		heartBeat = new HeartBeatRequest(DN_ID).toProto();
-		System.out.println("DataNode IP : " + blockReport.location.ip);
+		System.out.println("DataNode IP : " + InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
 		//System.out.println(InetAddress.getLocalHost().getHostAddress());
 		
 		File folder = new File(dataNodeDir);
