@@ -37,6 +37,7 @@ message ReduceTaskStatus {
   optional bool taskCompleted = 3;
 }
 
+
 message HeartBeatRequest {
   optional int32 taskTrackerId = 1;
   optional int32 numMapSlotsFree = 2;
