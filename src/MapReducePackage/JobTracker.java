@@ -155,16 +155,26 @@ public class JobTracker implements IJobTracker {
 				if(job.numMapTasksCompleted==job.totalMapTasks){
 					job.status = 1;
 					
-					ReducerTaskInfo reducerTaskInfo;
-					for(int i=1;i<=job.totalReduceTasks;i++){
-						reducerTaskInfo = new ReducerTaskInfo();
-						reducerTaskInfo.jobId = jobId;
-						reducerTaskInfo.taskId = job.totalMapTasks + i;
-						reducerTaskInfo.reducerName = job.reducerName;
-						reducerTaskInfo.mapOutputFiles = job.mapOutputFiles;
-						reducerTaskInfo.outputFile = job.outputFile;
-						reduceQueue.add(reducerTaskInfo);
+					ArrayList<ReducerTaskInfo> reducerTaskInfo = new ArrayList<ReducerTaskInfo>();
+					ReducerTaskInfo r;
+					int totalReducer = job.totalReduceTasks; 
+					for(int i=1;i<=totalReducer;i++){
+						r = new ReducerTaskInfo();
+						r.jobId = jobId;
+						r.taskId = job.totalMapTasks + i;
+						r.reducerName = job.reducerName;
+						r.mapOutputFiles = new ArrayList<String>();
+						r.outputFile = job.outputFile;
+						reducerTaskInfo.add(r);
 					}
+					String file;
+					for(int i=0;i<job.mapOutputFiles.size();i++){
+						file = job.mapOutputFiles.get(i);
+						r = reducerTaskInfo.get(i % totalReducer);
+						r.mapOutputFiles.add(file);
+						reducerTaskInfo.add(i%totalReducer, r);
+					}
+					reduceQueue.addAll(reducerTaskInfo);
 				}
 			}
 		}
