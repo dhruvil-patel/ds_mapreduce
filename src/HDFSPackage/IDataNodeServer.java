@@ -28,7 +28,7 @@ import HDFSPackage.RequestResponse.HeartBeatRequest;
 public class IDataNodeServer implements IDataNode {
 	private static long heartbeatTimeInterval = 5000;
 	private static long blockReportTimeInterval;
-	int DN_ID;
+	public static int DN_ID;
 	String NN_IP;
 	public static String configFilePath = "datanode.config";
 	INameNode nameNodeClient;
