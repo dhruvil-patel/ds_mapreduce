@@ -1222,7 +1222,8 @@ public final class MapReduce {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
+   
+	public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return MapReduce.internal_static_JobSubmitResponse_descriptor;
     }

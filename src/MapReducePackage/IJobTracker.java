@@ -1,8 +1,8 @@
 package MapReducePackage;
-
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface IJobTracker {
+public interface IJobTracker extends Remote{
 	
 	/* JobSubmitResponse jobSubmit(JobSubmitRequest) */
 	byte[] jobSubmit(byte[] input) throws RemoteException;
