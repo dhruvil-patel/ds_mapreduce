@@ -1,6 +1,8 @@
 package MapReducePackage;
 
-public interface IJobTracker {
+import java.rmi.Remote;
+
+public interface IJobTracker extends Remote{
 	
 	/* JobSubmitResponse jobSubmit(JobSubmitRequest) */
 	byte[] jobSubmit(byte[] input);

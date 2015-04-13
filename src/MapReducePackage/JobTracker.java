@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Queue;
@@ -11,6 +12,7 @@ import java.util.Queue;
 import javax.print.attribute.standard.QueuedJobCount;
 
 import HDFSPackage.INameNode;
+import HDFSPackage.INameNodeServer;
 import MapReducePackage.RequestResponse.HeartBeatRequest;
 import MapReducePackage.RequestResponse.HeartBeatResponse;
 import MapReducePackage.RequestResponse.*;
@@ -19,7 +21,8 @@ import HDFSPackage.RequestResponse.*;
 public class JobTracker implements IJobTracker {
 
 	int lastJobId;
-	String NN_IP = "localhost";
+	static String NNIP ;
+	static int port;
 	HashMap<Integer, Job> jobStatus;
 	HashMap<Integer, ArrayList<MapTaskInfo>> mapQueue;
 	ArrayList<ReducerTaskInfo> reduceQueue;
@@ -30,6 +33,8 @@ public class JobTracker implements IJobTracker {
 		jobStatus = new HashMap<Integer, Job>();
 		mapQueue = new HashMap<Integer, ArrayList<MapTaskInfo>>();
 		reduceQueue = new ArrayList<ReducerTaskInfo>();
+		NNIP = new String("lpcalhost");
+		port = 123;
 	}
 
 	@Override
@@ -43,7 +48,7 @@ public class JobTracker implements IJobTracker {
 				jobSubmitRequest.inputFile, true);
 
 		try {
-			registry = LocateRegistry.getRegistry(NN_IP);
+			registry = LocateRegistry.getRegistry(NNIP);
 			nameNodeClient = (INameNode) registry.lookup("NameNode");
 
 			OpenFileResponse openFileResponse = new OpenFileResponse(
@@ -226,6 +231,20 @@ public class JobTracker implements IJobTracker {
 		  }
 		  return val;
 	}
+	
+	public static void main(String args[]){
+		try {
+			String name = "JobTracker";
+            IJobTracker jobTracker = new JobTracker();
+            IJobTracker stub = (IJobTracker) UnicastRemoteObject.exportObject(jobTracker, 0);
+            Registry registry = LocateRegistry.getRegistry(NNIP);
+            registry.rebind(name, stub);
+            System.out.println("NameNode bound");
+        } catch (Exception e) {
+           
+            e.printStackTrace();
+        }
+	}
 
 }
 
@@ -264,4 +283,6 @@ class Job {
 		}else
 			return false;
 	}
+	
+	
 }
