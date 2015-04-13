@@ -34,7 +34,7 @@ public class IDataNodeServer implements IDataNode {
 	INameNode nameNodeClient;
 	BlockReportRequest blockReport;
 	byte []heartBeat;
-	private String dataNodeDir; 
+	public static String dataNodeDir; 
     
 	public IDataNodeServer() throws Exception {
 		blockReport = new BlockReportRequest(DN_ID,new DataNodeLocation(), new ArrayList<Integer>());
@@ -196,6 +196,7 @@ public class IDataNodeServer implements IDataNode {
 				configFilePath = args[0];
 				System.out.println(configFilePath);
 			}
+			System.out.println(configFilePath);
 			final IDataNodeServer dataNode = new IDataNodeServer();
 			String name = "DataNode";
             IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject(dataNode, 0);

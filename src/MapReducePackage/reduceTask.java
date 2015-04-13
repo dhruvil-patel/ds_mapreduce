@@ -27,7 +27,7 @@ public class reduceTask implements Runnable {
 			Reducer = Class.forName(reducerTaskInfo.reducerName);
 			reducer = (IReducer) Reducer.newInstance();
 			HDFSAPI hdfs = new HDFSAPI(TaskTracker.HDFS_NN_IP,TaskTracker.blockSize);
-			Writer writer = new OutputStreamWriter(new FileOutputStream(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile));
+			Writer writer = new OutputStreamWriter(new FileOutputStream(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile+reducerTaskInfo.taskId));
 			for (String mapOutputFileName : reducerTaskInfo.mapOutputFiles) {
 				hdfs.copyFromHDFS(mapOutputFileName,TaskTracker.dataNodeDir + "/" +mapOutputFileName);
 				File inputFile = new File(TaskTracker.dataNodeDir + "/" +mapOutputFileName);
@@ -37,13 +37,13 @@ public class reduceTask implements Runnable {
 					String outStr = reducer.reduce(str);
 					if(outStr.length()>0)
 						writer.write(outStr+"\n");
-					sc.next();
 				}
 				sc.close();
 			}
 			writer.close();
-			hdfs.copyToHDFS(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile,reducerTaskInfo.outputFile);
-			
+			hdfs.copyToHDFS(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile+reducerTaskInfo.taskId,reducerTaskInfo.outputFile+reducerTaskInfo.taskId);
+
+			new File(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile+reducerTaskInfo.taskId).delete();
 		} catch (ClassNotFoundException | InstantiationException
 				| IllegalAccessException | IOException | NotBoundException e1) {
 			e1.printStackTrace();

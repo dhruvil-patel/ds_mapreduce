@@ -3,3 +3,4 @@ rm -r metadata
 mkdir metadata
 echo "1" > blocknumber
 java -Djava.security.policy=server.policy HDFSPackage.INameNodeServer 
+#java -Djava.security.policy=server.policy MapReducePackage.JobTracker jobtracker.config

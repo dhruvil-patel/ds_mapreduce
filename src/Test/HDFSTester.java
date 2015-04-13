@@ -8,7 +8,7 @@ import API.HDFSAPI;
 
 public class HDFSTester {
 	public static void main(String args[]) throws NotBoundException, IOException{
-		HDFSAPI hdfs = new HDFSAPI("10.42.0.1",4096000);
+		HDFSAPI hdfs = new HDFSAPI("192.168.122.1",4096);
 
 		if(args.length < 2)
 			hdfs.copyToHDFS(args[0], "hdfs_"+args[0]);

@@ -1,5 +1,6 @@
 package MapReducePackage;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -8,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Queue;
+import java.util.Scanner;
 
 import javax.print.attribute.standard.QueuedJobCount;
 
@@ -27,14 +29,31 @@ public class JobTracker implements IJobTracker {
 	HashMap<Integer, ArrayList<MapTaskInfo>> mapQueue;
 	ArrayList<ReducerTaskInfo> reduceQueue;
 	INameNode nameNodeClient;
-
-	public JobTracker() throws RemoteException {
+	public JobTracker(String configFilePath) throws Exception {
 		lastJobId = 1; // read from file
 		jobStatus = new HashMap<Integer, Job>();
 		mapQueue = new HashMap<Integer, ArrayList<MapTaskInfo>>();
 		reduceQueue = new ArrayList<ReducerTaskInfo>();
-		NNIP = new String("lpcalhost");
-		port = 123;
+		NNIP = new String("192.168.122.1");
+		port = 10002;
+		
+		File file = new File(configFilePath);
+		if(!file.exists()){
+			throw new Exception("datanode.config does not exists");
+		}
+		Scanner sc = new Scanner(file);
+		while(sc.hasNext()){
+			String tmp[] = sc.nextLine().split(",");
+			if(tmp[0].compareTo("nameNodeIp") == 0){
+				NNIP = new String(tmp[1]);
+			}
+			if(tmp[0].compareTo("port") == 0){
+				port = Integer.parseInt(tmp[1]);
+			}
+			
+		}
+		sc.close();
+		
 	}
 
 	@Override
@@ -100,23 +119,32 @@ public class JobTracker implements IJobTracker {
 					for(int ttId : mapCountMapping.keySet()){	// add local map to global map
 						ArrayList<MapTaskInfo> tmp;
 						if(mapQueue.containsKey(ttId)){
+							System.out.println("JT: " + ttId+ "Found Entry in tmp map");
 							tmp = mapQueue.get(ttId);
+							if(tmp == null)
+								System.out.println("JT : tmp null for " + ttId);
 						}else{
 							tmp = new ArrayList<MapTaskInfo>();
+							System.out.println("JT: " + ttId+ "new Entry in tmp");
 						}
-						tmp.add(mapCountMapping.get(ttId));
+						MapTaskInfo t = mapCountMapping.get(ttId);
+						System.out.println("JT: t "+t);
+						
+						tmp.add(t);
 						mapQueue.put(ttId,tmp);
 					}
 					
 					Job job = new Job(lastJobId,jobSubmitRequest,taskId);
 					jobStatus.put(lastJobId,job);
-					jobSubmitResponse = new JobSubmitResponse(lastJobId, 1);
+					jobSubmitResponse = new JobSubmitResponse(1, lastJobId);
 				}
 			}
 
 		} catch (RemoteException | NotBoundException e) {
 			e.printStackTrace();
 		}
+
+		System.out.println("JT: jobstatus " +jobSubmitResponse.status);
 		return jobSubmitResponse.toProto();
 	}
 
@@ -134,6 +162,9 @@ public class JobTracker implements IJobTracker {
 			jobStatusResponse.totalMapTasks = job.totalMapTasks;
 			jobStatusResponse.numMapTasksStarted = job.numMapTasksStarted;
 			jobStatusResponse.totalReduceTasks = job.totalReduceTasks;
+			
+			
+			
 			jobStatusResponse.numReduceTasksStarted = job.numReduceTasksStarted;
 			jobStatusResponse.jobDone = job.isJobDone();
 			if(jobStatusResponse.jobDone){
@@ -157,12 +188,18 @@ public class JobTracker implements IJobTracker {
 				job = jobStatus.get(jobId);
 				job.numMapTasksCompleted++;
 				job.mapOutputFiles.add(mapTaskStatus.mapOutputFile);
+				System.out.println("MapJob completed" + job.numMapTasksCompleted + "total "+ job.totalMapTasks);
 				if(job.numMapTasksCompleted==job.totalMapTasks){
 					job.status = 1;
-					
+					System.out.println("Map completed.!!");
 					ArrayList<ReducerTaskInfo> reducerTaskInfo = new ArrayList<ReducerTaskInfo>();
 					ReducerTaskInfo r;
-					int totalReducer = job.totalReduceTasks; 
+					//int totalReducer = job.totalReduceTasks;
+
+					int totalReducer = Math.min(job.totalReduceTasks,job.totalMapTasks);
+					job.numReduceTasksStarted = job.totalReduceTasks - totalReducer;
+					job.numReduceTasksCompleted = job.totalReduceTasks - totalReducer;
+					
 					for(int i=1;i<=totalReducer;i++){
 						r = new ReducerTaskInfo();
 						r.jobId = jobId;
@@ -176,8 +213,10 @@ public class JobTracker implements IJobTracker {
 					for(int i=0;i<job.mapOutputFiles.size();i++){
 						file = job.mapOutputFiles.get(i);
 						r = reducerTaskInfo.get(i % totalReducer);
+						reducerTaskInfo.remove(i % totalReducer);
 						r.mapOutputFiles.add(file);
 						reducerTaskInfo.add(i%totalReducer, r);
+						System.out.println(file + "Assigned to"+ (i%totalReducer));
 					}
 					reduceQueue.addAll(reducerTaskInfo);
 				}
@@ -198,17 +237,18 @@ public class JobTracker implements IJobTracker {
 		int ttId = heartBeatRequest.taskTrackerId;
 		int assignMapTask = heartBeatRequest.numMapSlotsFree;
 		ArrayList<MapTaskInfo> startMappers = mapQueue.get(ttId);
-		while(assignMapTask > 0 && startMappers.size() > 0){
-			heartBeatResponse.mapTasks.add(startMappers.get(0));
-			jobId = startMappers.get(0).jobId;
-			job = jobStatus.get(jobId);
-			job.numMapTasksStarted++;
-			jobStatus.put(jobId, job);
-			startMappers.remove(0);
-			assignMapTask--;
+		if(startMappers != null){
+			while(assignMapTask > 0 && startMappers.size() > 0){
+				heartBeatResponse.mapTasks.add(startMappers.get(0));
+				jobId = startMappers.get(0).jobId;
+				job = jobStatus.get(jobId);
+				job.numMapTasksStarted++;
+				jobStatus.put(jobId, job);
+				startMappers.remove(0);
+				assignMapTask--;
+			}
+			mapQueue.put(ttId, startMappers);
 		}
-		mapQueue.put(ttId, startMappers);
-		
 		int assignReduceTask = heartBeatRequest.numReduceSlotsFree;
 		while(assignReduceTask > 0 && reduceQueue.size() > 0){
 			heartBeatResponse.reduceTasks.add(reduceQueue.get(0));
@@ -219,8 +259,8 @@ public class JobTracker implements IJobTracker {
 			reduceQueue.remove(0);
 			assignReduceTask--;
 		}
-		
-		return null;
+		System.out.println("JT: HeartBeat from "+ ttId);
+		return heartBeatResponse.toProto();
 	}
 	
 	int pack(byte[] bytes) {
@@ -235,11 +275,11 @@ public class JobTracker implements IJobTracker {
 	public static void main(String args[]){
 		try {
 			String name = "JobTracker";
-            IJobTracker jobTracker = new JobTracker();
-            IJobTracker stub = (IJobTracker) UnicastRemoteObject.exportObject(jobTracker, 0);
+            IJobTracker jobTracker = new JobTracker(args[0]);
+            IJobTracker stub = (IJobTracker) UnicastRemoteObject.exportObject(jobTracker, port);
             Registry registry = LocateRegistry.getRegistry(NNIP);
             registry.rebind(name, stub);
-            System.out.println("NameNode bound");
+            System.out.println("JobTracker bound to "+NNIP + ":" + port);
         } catch (Exception e) {
            
             e.printStackTrace();

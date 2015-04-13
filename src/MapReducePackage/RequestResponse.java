@@ -513,6 +513,8 @@ public interface RequestResponse {
 		public HeartBeatResponse(byte[] input) {
 			MapReduce.HeartBeatResponse builder = null;
 			try {
+				if(input == null)
+					System.out.println("TT:input Null");
 				builder = MapReduce.HeartBeatResponse.parseFrom(input);
 			} catch (InvalidProtocolBufferException e) {
 				e.printStackTrace();

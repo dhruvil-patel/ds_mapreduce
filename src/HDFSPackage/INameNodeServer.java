@@ -280,6 +280,7 @@ public class INameNodeServer implements INameNode {
 				}
 				if(tmp[0].compareTo("nameNodeIp") == 0){
 					NN_IP = new String(tmp[1]);
+					System.out.println(NN_IP);
 				}
 				if(tmp[0].compareTo("nameNodeDir") == 0){
 					nameNodeDir = new String(tmp[1]);
@@ -305,7 +306,7 @@ public class INameNodeServer implements INameNode {
 		try {
 			String name = "NameNode";
             INameNode nameNode = new INameNodeServer();
-            System.out.println("1" + NN_IP);
+            System.out.println("NN_IP" + NN_IP);
             INameNode stub = (INameNode) UnicastRemoteObject.exportObject(nameNode, 0);
             Registry registry = LocateRegistry.getRegistry(NN_IP);
             registry.rebind(name, stub);

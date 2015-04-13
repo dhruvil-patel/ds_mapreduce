@@ -10,7 +10,6 @@ import java.rmi.NotBoundException;
 import java.util.Scanner;
 
 import API.HDFSAPI;
-import HDFSPackage.IDataNodeServer;
 import MapReducePackage.RequestResponse.MapTaskInfo;
 import MapReducePackage.RequestResponse.MapTaskStatus;
 
@@ -33,22 +32,21 @@ public class mapTask implements Runnable {
 
 			Writer writer = new OutputStreamWriter(new FileOutputStream(TaskTracker.dataNodeDir + "/" +outputFileName));
 			for (int blockNo : mapTaskInfo.inputBlocks) {
-				File inputFile = new File(TaskTracker.dataNodeDir + "/"	+ IDataNodeServer.DN_ID + "_" + blockNo);
+				File inputFile = new File(TaskTracker.dataNodeDir + "/"	+ TaskTracker.DN_ID + "_" + blockNo);
 				Scanner sc = new Scanner(inputFile);
 				while (sc.hasNext()) {
 					String str = sc.nextLine();
 					String outStr = mapper.map(str);
-					if(outStr.length()>0)
+					if(outStr != null)
 						writer.write(outStr+"\n");
-					sc.next();
 				}
 				sc.close();
 			}
 			writer.close();
 			HDFSAPI hdfs = new HDFSAPI(TaskTracker.HDFS_NN_IP,TaskTracker.blockSize);
 			hdfs.copyToHDFS(TaskTracker.dataNodeDir + "/" +outputFileName,outputFileName);
-			
-		} catch (ClassNotFoundException | InstantiationException
+			new File(TaskTracker.dataNodeDir + "/" +outputFileName).delete();
+		} catch (LinkageError |ClassNotFoundException | InstantiationException
 				| IllegalAccessException | IOException | NotBoundException e1) {
 			e1.printStackTrace();
 		}
