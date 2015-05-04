@@ -44,7 +44,7 @@ public class TaskTracker {
 	ArrayList<ReduceTaskStatus> reduceStatus;
 	public static String dataNodeDir;
 	public static String HDFS_NN_IP;
-	public static int blockSize = 1024;
+	public static int blockSize = 16777216;
 	public static int DN_ID ;
 	
 	
@@ -64,7 +64,7 @@ public class TaskTracker {
 		
 		File file = new File(configFilePath);
 		if(!file.exists()){
-			throw new Exception(configFilePath+" does not exists");
+			throw new Exception("config file :"+configFilePath+" does not exists");
 		}
 		Scanner sc = new Scanner(file);
 		while(sc.hasNext()){

@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.rmi.NotBoundException;
 import java.util.Scanner;
 
@@ -16,6 +18,7 @@ import MapReducePackage.RequestResponse.ReducerTaskInfo;
 
 public class reduceTask implements Runnable {
 	ReducerTaskInfo reducerTaskInfo;
+	String jarFilePath,jarFileName = "Test.jar";
 	public reduceTask(ReducerTaskInfo _reducerTaskInfo) {
 		reducerTaskInfo = _reducerTaskInfo;
 	}
@@ -24,9 +27,17 @@ public class reduceTask implements Runnable {
 		Class Reducer;
 		IReducer reducer = null;
 		try {
-			Reducer = Class.forName(reducerTaskInfo.reducerName);
-			reducer = (IReducer) Reducer.newInstance();
+
 			HDFSAPI hdfs = new HDFSAPI(TaskTracker.HDFS_NN_IP,TaskTracker.blockSize);
+			jarFilePath = TaskTracker.dataNodeDir + "/" + jarFileName;
+			hdfs.copyFromHDFS(jarFileName,jarFilePath);
+
+			System.out.println("Reducer :: Jar Path "+ jarFilePath );
+			URL urlList[] = new URL[1];
+			urlList[0] = new File(jarFilePath).toURI().toURL();
+			URLClassLoader loader = new URLClassLoader(urlList);
+			Reducer = Class.forName(reducerTaskInfo.reducerName,true,loader);
+			reducer = (IReducer) Reducer.newInstance();
 			Writer writer = new OutputStreamWriter(new FileOutputStream(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile+reducerTaskInfo.taskId));
 			for (String mapOutputFileName : reducerTaskInfo.mapOutputFiles) {
 				hdfs.copyFromHDFS(mapOutputFileName,TaskTracker.dataNodeDir + "/" +mapOutputFileName);
@@ -39,6 +50,7 @@ public class reduceTask implements Runnable {
 						writer.write(outStr+"\n");
 				}
 				sc.close();
+				new File(TaskTracker.dataNodeDir + "/" +mapOutputFileName).delete();
 			}
 			writer.close();
 			hdfs.copyToHDFS(TaskTracker.dataNodeDir + "/" +reducerTaskInfo.outputFile+reducerTaskInfo.taskId,reducerTaskInfo.outputFile+reducerTaskInfo.taskId);

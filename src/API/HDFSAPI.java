@@ -54,14 +54,14 @@ public class HDFSAPI {
 			throw new FileNotFoundException("File Not found");
 		}
 		BlockLocationRequest blockLocationRequest = new BlockLocationRequest(openFileResponse.blockNums);
-		System.out.println( "2#of block" + blockLocationRequest.blockNums.size());
-		System.out.println("req size"+ blockLocationRequest.toProto().length);
+		//System.out.println( "2#of block" + blockLocationRequest.blockNums.size());
+		//System.out.println("req size"+ blockLocationRequest.toProto().length);
 		byte []tmp = nameNodeClient.getBlockLocations(blockLocationRequest.toProto());
 		BlockLocationResponse blockLocationResponse = new BlockLocationResponse(tmp);
-		System.out.println("# of block locations " + blockLocationResponse.blockLocations.size());
+		//System.out.println("# of block locations " + blockLocationResponse.blockLocations.size());
 		for(BlockLocations bls : blockLocationResponse.blockLocations){
 			boolean readFlag = false;
-			System.out.println("# of dns" + bls.locations.size());
+			//System.out.println("# of dns" + bls.locations.size());
 			for(DataNodeLocation dnl:bls.locations){
 				try {
 					Registry registry = LocateRegistry.getRegistry(intToIP(dnl.ip));
@@ -69,7 +69,6 @@ public class HDFSAPI {
 					ReadBlockRequest readBlockRequest = new ReadBlockRequest(bls.blockNumber);
 					tmp = dataNodeClient.readBlock(readBlockRequest.toProto());
 					ReadBlockResponse readBlockResponse = new ReadBlockResponse(tmp);
-					System.out.println("**"+ readBlockResponse.status);
 					if(readBlockResponse.status == 1){
 						fd.write(readBlockResponse.data);
 						readFlag = true;

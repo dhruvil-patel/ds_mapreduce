@@ -1,11 +1,14 @@
 package Test;
 
+import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import API.HDFSAPI;
 import MapReducePackage.IJobTracker;
+import MapReducePackage.TaskTracker;
 import MapReducePackage.RequestResponse.JobStatusRequest;
 import MapReducePackage.RequestResponse.JobStatusResponse;
 import MapReducePackage.RequestResponse.JobSubmitRequest;
@@ -13,12 +16,14 @@ import MapReducePackage.RequestResponse.JobSubmitResponse;
 
 public class MapReduceTester {
 
-	public static void main(String arg[]) throws RemoteException, NotBoundException{
+	public static void main(String arg[]) throws NotBoundException, IOException{
 		String JT_IP = "192.168.122.1";
 		int port = 10001;
 		Registry registry = LocateRegistry.getRegistry(JT_IP);
 		IJobTracker jobTrackerClient = (IJobTracker) registry.lookup("JobTracker");
 		System.out.println("Connected to Jobtracker "+ JT_IP + ":" + port);
+		HDFSAPI hdfs = new HDFSAPI(JT_IP,16777216);
+		hdfs.copyToHDFS("/home/kjigar/IIIT_Linux/DS/proj/HDFS/bin/Test.jar","Test.jar");
 		JobSubmitRequest jobSubmitRequest = new JobSubmitRequest(arg[0], arg[1], arg[2], arg[3], Integer.parseInt(arg[4]));
 		JobSubmitResponse jobSubmitResponse = new JobSubmitResponse(jobTrackerClient.jobSubmit(jobSubmitRequest.toProto()));
 		if(jobSubmitResponse.status == 1){
