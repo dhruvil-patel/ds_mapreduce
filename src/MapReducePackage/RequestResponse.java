@@ -1,5 +1,9 @@
 package MapReducePackage;
 
+/**
+ *  This wraps all the classes of MAPREDUCE.java and provides additional methods for access of data. 
+ */
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -18,12 +22,12 @@ public interface RequestResponse {
 		public String outputFile;
 		public int numReduceTasks;
 
-		public JobSubmitRequest(){
-			
+		public JobSubmitRequest() {
+
 		}
-		
-		public JobSubmitRequest(String _mapName, String _reducerName,
-				String _inputFile, String _outputFile, int _numReduceTasks) {
+
+		public JobSubmitRequest(String _mapName, String _reducerName, String _inputFile, String _outputFile,
+				int _numReduceTasks) {
 			mapName = _mapName;
 			reducerName = _reducerName;
 			inputFile = _inputFile;
@@ -47,8 +51,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.JobSubmitRequest.Builder builder = MapReduce.JobSubmitRequest
-					.newBuilder();
+			MapReduce.JobSubmitRequest.Builder builder = MapReduce.JobSubmitRequest.newBuilder();
 			builder.setMapName(mapName);
 			builder.setReducerName(reducerName);
 			builder.setInputFile(inputFile);
@@ -63,9 +66,9 @@ public interface RequestResponse {
 		public int jobId;
 
 		public JobSubmitResponse() {
-			
+
 		}
-		
+
 		public JobSubmitResponse(int _status, int _jobId) {
 			status = _status;
 			jobId = _jobId;
@@ -84,8 +87,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.JobSubmitResponse.Builder builder = MapReduce.JobSubmitResponse
-					.newBuilder();
+			MapReduce.JobSubmitResponse.Builder builder = MapReduce.JobSubmitResponse.newBuilder();
 			builder.setStatus(status);
 			builder.setJobId(jobId);
 			return builder.build().toByteArray();
@@ -95,10 +97,10 @@ public interface RequestResponse {
 	public class JobStatusRequest {
 		public int jobId;
 
-		public JobStatusRequest(){
-			
+		public JobStatusRequest() {
+
 		}
-		
+
 		public JobStatusRequest(int _jobId) {
 			jobId = _jobId;
 		}
@@ -115,8 +117,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.JobStatusRequest.Builder builder = MapReduce.JobStatusRequest
-					.newBuilder();
+			MapReduce.JobStatusRequest.Builder builder = MapReduce.JobStatusRequest.newBuilder();
 			builder.setJobId(jobId);
 			return builder.build().toByteArray();
 		}
@@ -130,12 +131,11 @@ public interface RequestResponse {
 		public int totalReduceTasks;
 		public int numReduceTasksStarted;
 
-		public JobStatusResponse(){
-			
+		public JobStatusResponse() {
+
 		}
-		
-		public JobStatusResponse(int _status, boolean _jobDone,
-				int _totalMapTasks, int _numMapTasksStarted,
+
+		public JobStatusResponse(int _status, boolean _jobDone, int _totalMapTasks, int _numMapTasksStarted,
 				int _totalReduceTasks, int _numReduceTasksStarted) {
 			status = _status;
 			jobDone = _jobDone;
@@ -162,8 +162,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.JobStatusResponse.Builder builder = MapReduce.JobStatusResponse
-					.newBuilder();
+			MapReduce.JobStatusResponse.Builder builder = MapReduce.JobStatusResponse.newBuilder();
 			builder.setStatus(status);
 			builder.setJobDone(jobDone);
 			builder.setTotalMapTasks(totalMapTasks);
@@ -179,9 +178,9 @@ public interface RequestResponse {
 		public int taskId;
 		public boolean taskCompleted;
 		public String mapOutputFile;
-		
-		public MapTaskStatus(){
-			
+
+		public MapTaskStatus() {
+
 		}
 
 		public MapTaskStatus(MapReduce.MapTaskStatus mpst) {
@@ -191,8 +190,7 @@ public interface RequestResponse {
 			mapOutputFile = mpst.getMapOutputFile();
 		}
 
-		public MapTaskStatus(int _jobId, int _taskId, boolean _taskCompleted,
-				String _mapOutputFile) {
+		public MapTaskStatus(int _jobId, int _taskId, boolean _taskCompleted, String _mapOutputFile) {
 			jobId = _jobId;
 			taskId = _taskId;
 			taskCompleted = _taskCompleted;
@@ -214,8 +212,7 @@ public interface RequestResponse {
 		}
 
 		public MapReduce.MapTaskStatus.Builder toProtoObject() {
-			MapReduce.MapTaskStatus.Builder mapTaskStatusBuilder = MapReduce.MapTaskStatus
-					.newBuilder();
+			MapReduce.MapTaskStatus.Builder mapTaskStatusBuilder = MapReduce.MapTaskStatus.newBuilder();
 			mapTaskStatusBuilder.setJobId(jobId);
 			mapTaskStatusBuilder.setTaskId(taskId);
 			mapTaskStatusBuilder.setTaskCompleted(taskCompleted);
@@ -224,8 +221,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.MapTaskStatus.Builder builder = MapReduce.MapTaskStatus
-					.newBuilder();
+			MapReduce.MapTaskStatus.Builder builder = MapReduce.MapTaskStatus.newBuilder();
 			builder.setJobId(jobId);
 			builder.setTaskId(taskId);
 			builder.setTaskCompleted(taskCompleted);
@@ -238,9 +234,9 @@ public interface RequestResponse {
 		public int jobId;
 		public int taskId;
 		public boolean taskCompleted;
-		
-		public ReduceTaskStatus(){
-			
+
+		public ReduceTaskStatus() {
+
 		}
 
 		public ReduceTaskStatus(MapReducePackage.MapReduce.ReduceTaskStatus rdst) {
@@ -269,8 +265,7 @@ public interface RequestResponse {
 		}
 
 		public MapReduce.ReduceTaskStatus.Builder toProtoObject() {
-			MapReduce.ReduceTaskStatus.Builder reduceTaskBuilder = MapReduce.ReduceTaskStatus
-					.newBuilder();
+			MapReduce.ReduceTaskStatus.Builder reduceTaskBuilder = MapReduce.ReduceTaskStatus.newBuilder();
 			reduceTaskBuilder.setJobId(jobId);
 			reduceTaskBuilder.setTaskId(taskId);
 			reduceTaskBuilder.setTaskCompleted(taskCompleted);
@@ -278,8 +273,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.ReduceTaskStatus.Builder builder = MapReduce.ReduceTaskStatus
-					.newBuilder();
+			MapReduce.ReduceTaskStatus.Builder builder = MapReduce.ReduceTaskStatus.newBuilder();
 			builder.setJobId(jobId);
 			builder.setTaskId(taskId);
 			builder.setTaskCompleted(taskCompleted);
@@ -294,14 +288,13 @@ public interface RequestResponse {
 		public ArrayList<MapTaskStatus> mapStatus;
 		public ArrayList<ReduceTaskStatus> reduceStatus;
 
-		public HeartBeatRequest(){
+		public HeartBeatRequest() {
 			mapStatus = new ArrayList<MapTaskStatus>();
 			reduceStatus = new ArrayList<ReduceTaskStatus>();
 		}
-		
-		public HeartBeatRequest(int _taskTrackerId, int _numMapSlotsFree,
-				int _numReduceSlotsFree, ArrayList<MapTaskStatus> _mapStatus,
-				ArrayList<ReduceTaskStatus> _reduceStatus) {
+
+		public HeartBeatRequest(int _taskTrackerId, int _numMapSlotsFree, int _numReduceSlotsFree,
+				ArrayList<MapTaskStatus> _mapStatus, ArrayList<ReduceTaskStatus> _reduceStatus) {
 			taskTrackerId = _taskTrackerId;
 			numMapSlotsFree = _numMapSlotsFree;
 			numReduceSlotsFree = _numReduceSlotsFree;
@@ -325,15 +318,13 @@ public interface RequestResponse {
 				mapStatus.add(new MapTaskStatus(mpst));
 			}
 			reduceStatus = new ArrayList<RequestResponse.ReduceTaskStatus>();
-			for (MapReduce.ReduceTaskStatus rdst : builder
-					.getReduceStatusList()) {
+			for (MapReduce.ReduceTaskStatus rdst : builder.getReduceStatusList()) {
 				reduceStatus.add(new ReduceTaskStatus(rdst));
 			}
 		}
 
 		public byte[] toProto() {
-			MapReduce.HeartBeatRequest.Builder builder = MapReduce.HeartBeatRequest
-					.newBuilder();
+			MapReduce.HeartBeatRequest.Builder builder = MapReduce.HeartBeatRequest.newBuilder();
 			builder.setTaskTrackerId(taskTrackerId);
 			builder.setNumMapSlotsFree(numMapSlotsFree);
 			builder.setNumReduceSlotsFree(numReduceSlotsFree);
@@ -353,10 +344,10 @@ public interface RequestResponse {
 		public String mapName;
 		ArrayList<Integer> inputBlocks;
 
-		public MapTaskInfo(){
+		public MapTaskInfo() {
 			inputBlocks = new ArrayList<Integer>();
 		}
-		
+
 		public MapTaskInfo(MapReduce.MapTaskInfo mapTaskInfo) {
 			jobId = mapTaskInfo.getJobId();
 			taskId = mapTaskInfo.getTaskId();
@@ -367,8 +358,7 @@ public interface RequestResponse {
 			}
 		}
 
-		public MapTaskInfo(int _jobId, int _taskId, String _mapName,
-				ArrayList<Integer> _inputBlocks) {
+		public MapTaskInfo(int _jobId, int _taskId, String _mapName, ArrayList<Integer> _inputBlocks) {
 			jobId = _jobId;
 			taskId = _taskId;
 			mapName = _mapName;
@@ -393,8 +383,7 @@ public interface RequestResponse {
 		}
 
 		public MapReduce.MapTaskInfo.Builder toProtoObject() {
-			MapReduce.MapTaskInfo.Builder mapTaskInfoBuilder = MapReduce.MapTaskInfo
-					.newBuilder();
+			MapReduce.MapTaskInfo.Builder mapTaskInfoBuilder = MapReduce.MapTaskInfo.newBuilder();
 			mapTaskInfoBuilder.setJobId(jobId);
 			mapTaskInfoBuilder.setTaskId(taskId);
 			mapTaskInfoBuilder.setMapName(mapName);
@@ -405,8 +394,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.MapTaskInfo.Builder builder = MapReduce.MapTaskInfo
-					.newBuilder();
+			MapReduce.MapTaskInfo.Builder builder = MapReduce.MapTaskInfo.newBuilder();
 			builder.setJobId(jobId);
 			builder.setTaskId(taskId);
 			builder.setMapName(mapName);
@@ -424,10 +412,10 @@ public interface RequestResponse {
 		ArrayList<String> mapOutputFiles;
 		public String outputFile;
 
-		public ReducerTaskInfo(){
+		public ReducerTaskInfo() {
 			mapOutputFiles = new ArrayList<String>();
 		}
-		
+
 		public ReducerTaskInfo(MapReduce.ReducerTaskInfo reduceTaskInfo) {
 			jobId = reduceTaskInfo.getJobId();
 			taskId = reduceTaskInfo.getTaskId();
@@ -439,8 +427,8 @@ public interface RequestResponse {
 			outputFile = reduceTaskInfo.getOutputFile();
 		}
 
-		public ReducerTaskInfo(int _jobId, int _taskId, String _reducerName,
-				ArrayList<String> _mapOutputFiles, String _outputFile) {
+		public ReducerTaskInfo(int _jobId, int _taskId, String _reducerName, ArrayList<String> _mapOutputFiles,
+				String _outputFile) {
 			jobId = _jobId;
 			taskId = _taskId;
 			reducerName = _reducerName;
@@ -467,8 +455,7 @@ public interface RequestResponse {
 		}
 
 		public MapReduce.ReducerTaskInfo.Builder toProtoObject() {
-			MapReduce.ReducerTaskInfo.Builder reducerTaskInfoBuilder = MapReduce.ReducerTaskInfo
-					.newBuilder();
+			MapReduce.ReducerTaskInfo.Builder reducerTaskInfoBuilder = MapReduce.ReducerTaskInfo.newBuilder();
 			reducerTaskInfoBuilder.setJobId(jobId);
 			reducerTaskInfoBuilder.setTaskId(taskId);
 			reducerTaskInfoBuilder.setReducerName(reducerName);
@@ -480,8 +467,7 @@ public interface RequestResponse {
 		}
 
 		public byte[] toProto() {
-			MapReduce.ReducerTaskInfo.Builder builder = MapReduce.ReducerTaskInfo
-					.newBuilder();
+			MapReduce.ReducerTaskInfo.Builder builder = MapReduce.ReducerTaskInfo.newBuilder();
 			builder.setJobId(jobId);
 			builder.setTaskId(taskId);
 			builder.setReducerName(reducerName);
@@ -498,11 +484,11 @@ public interface RequestResponse {
 		ArrayList<MapTaskInfo> mapTasks;
 		ArrayList<ReducerTaskInfo> reduceTasks;
 
-		public HeartBeatResponse(){
+		public HeartBeatResponse() {
 			mapTasks = new ArrayList<MapTaskInfo>();
 			reduceTasks = new ArrayList<ReducerTaskInfo>();
 		}
-		
+
 		public HeartBeatResponse(int _status, ArrayList<MapTaskInfo> _mapTasks,
 				ArrayList<ReducerTaskInfo> _reduceTasks) {
 			status = _status;
@@ -513,7 +499,7 @@ public interface RequestResponse {
 		public HeartBeatResponse(byte[] input) {
 			MapReduce.HeartBeatResponse builder = null;
 			try {
-				if(input == null)
+				if (input == null)
 					System.out.println("TT:input Null");
 				builder = MapReduce.HeartBeatResponse.parseFrom(input);
 			} catch (InvalidProtocolBufferException e) {
@@ -526,15 +512,13 @@ public interface RequestResponse {
 				mapTasks.add(new MapTaskInfo(mpinfo));
 			}
 			reduceTasks = new ArrayList<RequestResponse.ReducerTaskInfo>();
-			for (MapReduce.ReducerTaskInfo rdinfo : builder
-					.getReduceTasksList()) {
+			for (MapReduce.ReducerTaskInfo rdinfo : builder.getReduceTasksList()) {
 				reduceTasks.add(new ReducerTaskInfo(rdinfo));
 			}
 		}
 
 		public byte[] toProto() {
-			MapReduce.HeartBeatResponse.Builder builder = MapReduce.HeartBeatResponse
-					.newBuilder();
+			MapReduce.HeartBeatResponse.Builder builder = MapReduce.HeartBeatResponse.newBuilder();
 			builder.setStatus(status);
 			for (MapTaskInfo mpinfo : mapTasks) {
 				builder.addMapTasks(mpinfo.toProtoObject());

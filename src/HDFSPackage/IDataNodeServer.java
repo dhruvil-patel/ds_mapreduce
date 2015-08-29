@@ -1,6 +1,5 @@
 package HDFSPackage;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
@@ -33,107 +32,105 @@ public class IDataNodeServer implements IDataNode {
 	public static String configFilePath = "datanode.config";
 	INameNode nameNodeClient;
 	BlockReportRequest blockReport;
-	byte []heartBeat;
-	public static String dataNodeDir; 
-    
+	byte[] heartBeat;
+	public static String dataNodeDir;
+
 	public IDataNodeServer() throws Exception {
-		blockReport = new BlockReportRequest(DN_ID,new DataNodeLocation(), new ArrayList<Integer>());
+		blockReport = new BlockReportRequest(DN_ID, new DataNodeLocation(), new ArrayList<Integer>());
 		File file = new File(configFilePath);
-		if(!file.exists()){
+		if (!file.exists()) {
 			throw new Exception("datanode.config does not exists");
 		}
 		Scanner sc = new Scanner(file);
 		blockReport.location.ip = pack(InetAddress.getLocalHost().getAddress());
-		while(sc.hasNext()){
+		while (sc.hasNext()) {
 			String tmp[] = sc.nextLine().split(",");
-			if(tmp[0].compareTo("id") == 0){
+			if (tmp[0].compareTo("id") == 0) {
 				DN_ID = Integer.parseInt(tmp[1]);
 			}
-			if(tmp[0].compareTo("port") == 0){
+			if (tmp[0].compareTo("port") == 0) {
 				blockReport.location.port = Integer.parseInt(tmp[1]);
 			}
-			if(tmp[0].compareTo("nameNodeIp") == 0){
+			if (tmp[0].compareTo("nameNodeIp") == 0) {
 				NN_IP = new String(tmp[1]);
 			}
-			if(tmp[0].compareTo("datanodeDir") == 0){
+			if (tmp[0].compareTo("datanodeDir") == 0) {
 				dataNodeDir = new String(tmp[1]);
 			}
-			if(tmp[0].compareTo("heartbeatTimeInterval") == 0){
+			if (tmp[0].compareTo("heartbeatTimeInterval") == 0) {
 				heartbeatTimeInterval = Integer.parseInt(tmp[1]);
 			}
-			if(tmp[0].compareTo("blockReportTimeInterval") == 0){
+			if (tmp[0].compareTo("blockReportTimeInterval") == 0) {
 				blockReportTimeInterval = Integer.parseInt(tmp[1]);
 			}
-			if(tmp[0].compareTo("dataNodeIp") == 0){
+			if (tmp[0].compareTo("dataNodeIp") == 0) {
 				blockReport.location.ip = pack(InetAddress.getAllByName(tmp[1])[0].getAddress());
-				//System.out.println("DataNode IP : " + InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
+				// System.out.println("DataNode IP : " +
+				// InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
 			}
-			
-			
+
 		}
 		sc.close();
-		if(DN_ID == 0 || NN_IP.length() == 0){
+		if (DN_ID == 0 || NN_IP.length() == 0) {
 			throw new Exception("Invalid DataNodeID in datanode.config");
 		}
-		
-		System.out.println("NN_IP :" +NN_IP);
+
+		System.out.println("NN_IP :" + NN_IP);
 		Registry registry = LocateRegistry.getRegistry(NN_IP);
 		nameNodeClient = (INameNode) registry.lookup("NameNode");
-		
-		//System.out.println("My ip " + InetAddress.getAllByName("192.168.150.2")[0]);
+
+		// System.out.println("My ip " +
+		// InetAddress.getAllByName("192.168.150.2")[0]);
 		blockReport.id = DN_ID;
 		heartBeat = new HeartBeatRequest(DN_ID).toProto();
-		System.out.println("DataNode IP : " + InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
-		//System.out.println(InetAddress.getLocalHost().getHostAddress());
-		
+		System.out
+				.println("DataNode IP : " + InetAddress.getByAddress(unpack(blockReport.location.ip)).getHostAddress());
+		// System.out.println(InetAddress.getLocalHost().getHostAddress());
+
 		File folder = new File(dataNodeDir);
 		File[] listOfFiles = folder.listFiles();
 
-		if(listOfFiles != null)
-	    for (File blockFile : listOfFiles) {
-	    	if (blockFile.isFile()) {
-	    		System.out.println("File " + blockFile.getName());
-	    		blockReport.blockNumbers.add(Integer.parseInt(blockFile.getName().split("_")[1]));
-	    	}
-	    }
-		
+		if (listOfFiles != null)
+			for (File blockFile : listOfFiles) {
+				if (blockFile.isFile()) {
+					System.out.println("File " + blockFile.getName());
+					blockReport.blockNumbers.add(Integer.parseInt(blockFile.getName().split("_")[1]));
+				}
+			}
+
 	}
-	
+
 	int pack(byte[] bytes) {
-		  int val = 0;
-		  for (int i = 0; i < bytes.length; i++) {
-		    val <<= 8;
-		    val |= bytes[i] & 0xff;
-		  }
-		  return val;
+		int val = 0;
+		for (int i = 0; i < bytes.length; i++) {
+			val <<= 8;
+			val |= bytes[i] & 0xff;
+		}
+		return val;
 	}
 
 	byte[] unpack(int bytes) {
-		  return new byte[] {
-		    (byte)((bytes >>> 24) & 0xff),
-		    (byte)((bytes >>> 16) & 0xff),
-		    (byte)((bytes >>>  8) & 0xff),
-		    (byte)((bytes       ) & 0xff)
-		  };
+		return new byte[] { (byte) ((bytes >>> 24) & 0xff), (byte) ((bytes >>> 16) & 0xff),
+				(byte) ((bytes >>> 8) & 0xff), (byte) ((bytes) & 0xff) };
 	}
-	
+
 	/**
 	 * block file name : DNID_BlockNumber
 	 */
 	@Override
 	public byte[] readBlock(byte[] readBlockRequest) {
 		ReadBlockRequest readBlock = new ReadBlockRequest(readBlockRequest);
-		File file = new File(dataNodeDir+"/"+DN_ID + "_" +readBlock.blockNumber);
-		if(!file.exists()){
+		File file = new File(dataNodeDir + "/" + DN_ID + "_" + readBlock.blockNumber);
+		if (!file.exists()) {
 			try {
 				throw new Exception(file.getName() + " not found");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 		try {
-			return new ReadBlockResponse(1,Files.readAllBytes(file.toPath())).toProto();
+			return new ReadBlockResponse(1, Files.readAllBytes(file.toPath())).toProto();
 		} catch (IOException e) {
 			System.out.println("Finally:readBlock failed");
 			e.printStackTrace();
@@ -145,30 +142,30 @@ public class IDataNodeServer implements IDataNode {
 	public byte[] writeBlock(byte[] writeBlockRequest) throws RemoteException {
 		WriteBlockRequest writeBlock = new WriteBlockRequest(writeBlockRequest);
 
-		//File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
+		// File file = new File(DN_ID + "_" + writeBlock.blockInfo.blockNumber);
 
-		File file = new File(dataNodeDir+"/"+DN_ID + "_" + writeBlock.blockInfo.blockNumber);
+		File file = new File(dataNodeDir + "/" + DN_ID + "_" + writeBlock.blockInfo.blockNumber);
 		System.out.println(file.getAbsolutePath());
 
 		try {
 			Files.write(file.toPath(), writeBlock.data);
 			int index = -1;
-			for(DataNodeLocation dnl : writeBlock.blockInfo.locations){
+			for (DataNodeLocation dnl : writeBlock.blockInfo.locations) {
 				index++;
-				//to be on safeside
-				if(dnl.ip == blockReport.location.ip)
+				// to be on safeside
+				if (dnl.ip == blockReport.location.ip)
 					continue;
 				Registry registry = LocateRegistry.getRegistry(dnl.ip);
 				IDataNode dataNodeClient = (IDataNode) registry.lookup("DataNode");
-				
+
 				WriteBlockRequest writeBlockRequest1 = new WriteBlockRequest(writeBlock.blockInfo, writeBlock.data);
 				writeBlockRequest1.blockInfo.locations.remove(index);
-				byte []tmp = dataNodeClient.writeBlock(writeBlockRequest1.toProto());
+				byte[] tmp = dataNodeClient.writeBlock(writeBlockRequest1.toProto());
 				WriteBlockResponse writeBlockResponse = new WriteBlockResponse(tmp);
-				if(writeBlockResponse.status == 1)
+				if (writeBlockResponse.status == 1)
 					break;
-				else{
-					//TODO Mark datanode as down
+				else {
+					// TODO Mark datanode as down
 				}
 			}
 			blockReport.blockNumbers.add(writeBlock.blockInfo.blockNumber);
@@ -177,60 +174,58 @@ public class IDataNodeServer implements IDataNode {
 		} catch (IOException e) {
 			System.out.println("Finally:writeBlock failed");
 			e.printStackTrace();
-		}finally{
+		} finally {
 			return new WriteBlockResponse(0).toProto();
 		}
-		
+
 	}
-	
-	private void sendBlockReport() throws RemoteException {		
+
+	private void sendBlockReport() throws RemoteException {
 		nameNodeClient.blockReport(blockReport.toProto());
 	}
+
 	private void sendHeartBeat() throws RemoteException {
 		nameNodeClient.heartBeat(heartBeat);
 	}
-	
-	public static void main(String args[]) throws Exception{
+
+	public static void main(String args[]) throws Exception {
 		try {
-			if(args.length > 0 && args[0].compareTo("") != 0){
+			if (args.length > 0 && args[0].compareTo("") != 0) {
 				configFilePath = args[0];
 				System.out.println(configFilePath);
 			}
 			System.out.println(configFilePath);
 			final IDataNodeServer dataNode = new IDataNodeServer();
 			String name = "DataNode";
-            IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject(dataNode, 0);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(name, stub);
-            System.out.println("DataNode RMI Registered");
+			IDataNode stub = (IDataNode) UnicastRemoteObject.exportObject(dataNode, 0);
+			Registry registry = LocateRegistry.getRegistry();
+			registry.rebind(name, stub);
+			System.out.println("DataNode RMI Registered");
 			dataNode.sendBlockReport();
-		    new Timer().schedule(new TimerTask() {
-		    	public void run()  {
-		    		try {
+			new Timer().schedule(new TimerTask() {
+				public void run() {
+					try {
 						dataNode.sendHeartBeat();
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-		    	}
-		    	}, 1, heartbeatTimeInterval);
-		    
-		    new Timer().schedule(new TimerTask() {
-		    	public void run()  {
-		    		try {
+				}
+			}, 1, heartbeatTimeInterval);
+
+			new Timer().schedule(new TimerTask() {
+				public void run() {
+					try {
 						dataNode.sendBlockReport();
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-		    	}
-		    	}, 1, blockReportTimeInterval);
-		    
+				}
+			}, 1, blockReportTimeInterval);
+
 		} catch (RemoteException | NotBoundException e) {
 			e.printStackTrace();
-		};
+		}
+		;
 	}
-
-	
-
-	
 
 }

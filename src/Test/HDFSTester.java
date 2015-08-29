@@ -8,6 +8,9 @@ import API.HDFSAPI;
 
 public class HDFSTester {
 	public static void main(String args[]) throws NotBoundException, IOException{
+		/**
+		 *  Static testing only on single system with multiple VMs.
+		 */
 		HDFSAPI hdfs = new HDFSAPI("192.168.122.1",16777216);
 
 		if(args.length < 2)

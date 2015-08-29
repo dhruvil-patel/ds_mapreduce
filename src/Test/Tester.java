@@ -20,7 +20,6 @@ public class Tester {
 		ArrayList<BlockLocations> c = new ArrayList<BlockLocations>();
 		c.add(new BlockLocations(1010,b));
 		c.add(new BlockLocations(100,bc));
-//		BlockLocationResponse o = new BlockLocationResponse(102,c);
 
 		ArrayList<String> sa = new ArrayList<String>();
 		sa.add("a.txt");
@@ -29,13 +28,6 @@ public class Tester {
 		WriteBlockRequest o = new WriteBlockRequest(new BlockLocations(82, bc),"Hello to Hell!".getBytes());
 		WriteBlockRequest p = new WriteBlockRequest(o.toProto());
 		
-//		System.out.println(p.blockLocations.get(1).locations.get(0).ip);
-//		System.out.println(p.blockLocations.get(1).locations.get(0).port);
-//		System.out.println(p.blockLocations.get(1).locations.get(1).ip);
-//		System.out.println(p.blockLocations.get(1).locations.get(1).port);
-//		System.out.println(p.blockLocations.get(1).blockNumber);
-
-//		System.out.println(p.handle);
 		System.out.println(new String(p.data));
 		System.out.println(p.blockInfo.blockNumber);
 		System.out.println(p.blockInfo.locations.get(0).ip);

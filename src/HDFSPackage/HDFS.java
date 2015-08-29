@@ -1,5 +1,11 @@
 package HDFSPackage;
 
+/**
+ * @author dpate19
+ * 
+ *         This file is generated using google protobuf.
+ *
+ */
 
 public final class HDFS {
   private HDFS() {}
